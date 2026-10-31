@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#173D2C" />
+      <stop offset="100%" stop-color="#0E261B" />
+    </linearGradient>
+    <linearGradient id="flameGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F2B23E" />
+      <stop offset="60%" stop-color="#D9541F" />
+      <stop offset="100%" stop-color="#9E2B22" />
+    </linearGradient>
+  </defs>
+  <!-- Background Forest RoundRect -->
+  <rect width="512" height="512" rx="112" fill="url(#bgGrad)" />
+  
+  <!-- Outer Shield Emblem -->
+  <path d="M256 80 L384 136 V248 C384 340 328 412 256 440 C184 412 128 340 128 248 V136 Z" 
+        fill="none" stroke="#D8D0BE" stroke-width="14" stroke-linejoin="round" opacity="0.35" />
+
+  <!-- Inner Dynamic Flame Icon -->
+  <path d="M256 140 C280 190 320 220 320 270 C320 310 292 344 256 348 C220 344 192 310 192 270 C192 230 220 180 256 140 Z" 
+        fill="url(#flameGrad)" />
+  
+  <!-- Inner Flame Core (Safe Core) -->
+  <path d="M256 220 C270 248 290 270 290 295 C290 315 275 330 256 332 C237 330 222 315 222 295 C222 270 240 248 256 220 Z" 
+        fill="#F5F1E8" opacity="0.95" />
+
+  <!-- Monogram P -->
+  <text x="256" y="420" font-family="'Space Grotesk', system-ui, sans-serif" font-size="44" font-weight="bold" fill="#F5F1E8" text-anchor="middle" letter-spacing="4">PYROGUARD</text>
+</svg>

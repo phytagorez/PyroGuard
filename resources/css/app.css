@@ -1,0 +1,181 @@
+/* Google Fonts: Space Grotesk, Inter, JetBrains Mono */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import 'leaflet/dist/leaflet.css';
+
+@import 'tailwindcss';
+@import '../../node_modules/preline/variants.css';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../views/**/*.blade.php';
+@source '../js/**/*.js';
+@source '../../node_modules/preline/dist/*.js';
+
+:root {
+    /* -------------------------------------------------------------------------
+     * §5.1 Netral (Latar, Garis, Teks, Brand)
+     * ------------------------------------------------------------------------- */
+    --paper: #F5F1E8;
+    --paper-2: #EDE7DA;
+    --paper-3: #E3DBC9;
+    --line: #D8D0BE;
+    --ink: #14201A;
+    --ink-muted: #4C5A52;
+    --forest: #173D2C;
+    --moss: #2F7A4F;
+
+    /* -------------------------------------------------------------------------
+     * §5.1 Status Risiko (Hanya untuk Risiko Kebakaran)
+     * ------------------------------------------------------------------------- */
+    --safe-fill: #CFE6D6;
+    --safe: #1F6B45;
+    --warn-fill: #FBE3A6;
+    --warn: #A86412;
+    --warn-tag: #F2B23E;
+    --danger-fill: #D9544A;
+    --danger: #9E2B22;
+    --siaga: #7F1D1D;
+    --ember: #D9541F;
+
+    /* -------------------------------------------------------------------------
+     * §5.1 Fungsional Non-Risiko
+     * ------------------------------------------------------------------------- */
+    --water: #2B6CB0;
+    --evac: #5B4B8A;
+    --hotspot: #B3261E;
+    --report: #0F766E;
+    --focus: #1D4ED8;
+
+    /* -------------------------------------------------------------------------
+     * §5.3 Gerak & Transisi
+     * ------------------------------------------------------------------------- */
+    --motion-fast: 120ms;
+    --motion-base: 220ms;
+    --motion-slow: 420ms;
+}
+
+/* §11 Mode Terang Tinggi (Untuk Terik Matahari Kawasan Terbuka Bromo) */
+html.mode-terang-tinggi {
+    --paper: #FFFFFF;
+    --paper-2: #F8F8F8;
+    --paper-3: #EBEBEB;
+    --line: #14201A;
+    --ink: #0B140F;
+    --ink-muted: #1A2820;
+    --forest: #000000;
+}
+
+html.mode-terang-tinggi .border-line,
+html.mode-terang-tinggi .border {
+    border-color: #14201A !important;
+    border-width: 2px !important;
+}
+
+@theme {
+    /* Colors mapping */
+    --color-paper: var(--paper);
+    --color-paper-2: var(--paper-2);
+    --color-paper-3: var(--paper-3);
+    --color-line: var(--line);
+    --color-ink: var(--ink);
+    --color-ink-muted: var(--ink-muted);
+    --color-forest: var(--forest);
+    --color-moss: var(--moss);
+
+    --color-safe-fill: var(--safe-fill);
+    --color-safe: var(--safe);
+    --color-warn-fill: var(--warn-fill);
+    --color-warn: var(--warn);
+    --color-warn-tag: var(--warn-tag);
+    --color-danger-fill: var(--danger-fill);
+    --color-danger: var(--danger);
+    --color-siaga: var(--siaga);
+    --color-ember: var(--ember);
+
+    --color-water: var(--water);
+    --color-evac: var(--evac);
+    --color-hotspot: var(--hotspot);
+    --color-report: var(--report);
+    --color-focus: var(--focus);
+
+    /* Typography */
+    --font-display: 'Space Grotesk', system-ui, sans-serif;
+    --font-sans: 'Inter', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+    /* Elevations / Shadows */
+    --shadow-sheet: 0 -12px 40px rgba(20, 32, 26, 0.14);
+    --shadow-card: 0 2px 0 rgba(20, 32, 26, 0.04), 0 8px 24px rgba(20, 32, 26, 0.06);
+
+    /* Durations */
+    --duration-fast: 120ms;
+    --duration-base: 220ms;
+    --duration-slow: 420ms;
+}
+
+/* Base resets & typography defaults according to design.md */
+body {
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 16px; /* Minimum absolut 16px mobile (§5.2 & §11) */
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Custom focus ring according to §5.1 / §11 */
+:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+}
+
+/* Leaflet Custom Styles */
+.leaflet-container {
+    background-color: var(--paper-2);
+    font-family: var(--font-sans);
+}
+
+.zone-label-pill {
+    background: #FFFFFF;
+    color: #14201A;
+    border: 1px solid var(--line);
+    border-radius: 9999px;
+    padding: 2px 8px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 2px 6px rgba(20, 32, 26, 0.12);
+}
+
+/* Denyut Peringatan Titik Api Baru (§5.3 - maks 3 denyut) */
+@keyframes denyut-api {
+    0% { transform: scale(0.95); opacity: 0.9; }
+    50% { transform: scale(1.25); opacity: 0.4; }
+    100% { transform: scale(0.95); opacity: 0.9; }
+}
+
+.anim-denyut-api {
+    animation: denyut-api 1.8s ease-in-out 3 forwards;
+}
+
+/* Transisi Poligon Peta 420 ms (§5.3 --motion-slow & §6.13) */
+path.leaflet-interactive {
+    transition: fill var(--duration-slow) ease-in-out, stroke var(--duration-slow) ease-in-out, fill-opacity var(--duration-slow) ease-in-out;
+}
+
+/* Aksesibilitas: Hormati preferensi pengurangan gerak (§5.3 & §11) */
+@media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    .anim-denyut-api {
+        animation: none !important;
+        outline: 3px solid var(--hotspot) !important;
+    }
+    path.leaflet-interactive {
+        transition: none !important;
+    }
+}
