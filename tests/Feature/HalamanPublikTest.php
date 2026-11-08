@@ -9,21 +9,19 @@ beforeEach(function () {
     $this->seed(DatabaseSeeder::class);
 });
 
-test('halaman utama pantauan (/) memuat banner status kawasan, peta leaflet, 6 zona bromo, dan fab lapor', function () {
+test('halaman pantauan memisahkan batas administrasi, referensi zona, dan data historis', function () {
     $response = $this->get('/');
 
     $response->assertOk()
         ->assertSee('Pyro')
         ->assertSee('Guard')
         ->assertSee('Bromo')
-        ->assertSee('STATUS KAWASAN TERTINGGI')
         ->assertSee('id="petaPantauan"', false)
-        ->assertSee('Zonasi Risiko')
-        ->assertSee('Titik Panas')
+        ->assertSee('Batas administrasi')
+        ->assertSee('Wilayah analisis GEE')
+        ->assertSee('Referensi zona')
         ->assertSee('Logistik')
-        ->assertSee('Jalur Evakuasi')
-        ->assertSee('Sumber Air Terdekat')
-        ->assertSee('Bukti Lapangan 72 Jam Terakhir')
+        ->assertSee('bukan batas wilayah')
         ->assertSee('Lapor asap')
         ->assertSee('BRM-01')
         ->assertSee('BRM-02')
@@ -46,7 +44,7 @@ test('halaman jalur evakuasi (/evakuasi) memuat peta, sumber air, arah angin, da
         ->assertSee('Bagikan lokasi');
 });
 
-test('halaman metode (/metode) menampilkan formula fdi, ambang batas, hasil backtesting, dan batas otoritas', function () {
+test('halaman metode menampilkan sumber data formula dan status validasi yang jujur', function () {
     $response = $this->get('/metode');
 
     $response->assertOk()
@@ -54,8 +52,10 @@ test('halaman metode (/metode) menampilkan formula fdi, ambang batas, hasil back
         ->assertSee('CDD (Consecutive Dry Days)')
         ->assertSee('FDI (Fire Danger Index)')
         ->assertSee('Poin_CDD')
-        ->assertSee('91.2%')
-        ->assertSee('8.4%')
+        ->assertSee('Hasil evaluasi belum tersedia')
+        ->assertSee('Sumber & status dataset', false)
+        ->assertDontSee('91.2%')
+        ->assertDontSee('8.4%')
         ->assertSee('Alat Bantu Keputusan');
 });
 

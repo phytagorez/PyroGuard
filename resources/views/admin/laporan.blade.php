@@ -6,7 +6,7 @@
 <div class="space-y-6">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <span class="font-mono text-xs font-bold text-forest uppercase tracking-wider">MODUL FR-REP-07</span>
+
             <h1 class="text-2xl font-display font-bold text-ink tracking-tight mt-0.5">
                 Manajemen Laporan Lapangan & Skor Kepercayaan
             </h1>
@@ -16,19 +16,19 @@
         </div>
 
         {{-- Filter Status --}}
-        <div class="flex items-center gap-1.5 text-xs font-mono">
-            <a href="{{ route('admin.laporan') }}" class="px-3 py-1.5 rounded-lg border {{ !request('status') ? 'bg-forest text-white' : 'bg-paper-2 text-ink border-line' }}">Semua</a>
-            <a href="{{ route('admin.laporan', ['status' => 'baru']) }}" class="px-3 py-1.5 rounded-lg border {{ request('status') === 'baru' ? 'bg-amber-500 text-white' : 'bg-paper-2 text-ink border-line' }}">Baru</a>
-            <a href="{{ route('admin.laporan', ['status' => 'terverifikasi']) }}" class="px-3 py-1.5 rounded-lg border {{ request('status') === 'terverifikasi' ? 'bg-danger text-white' : 'bg-paper-2 text-ink border-line' }}">Terverifikasi</a>
-            <a href="{{ route('admin.laporan', ['status' => 'selesai']) }}" class="px-3 py-1.5 rounded-lg border {{ request('status') === 'selesai' ? 'bg-forest text-white' : 'bg-paper-2 text-ink border-line' }}">Selesai</a>
+        <div class="flex items-center gap-1.5 text-xs font-sans">
+            <a href="{{ route('admin.laporan') }}" class="min-h-[44px] px-3.5 py-2 rounded-md border flex items-center transition duration-fast active:scale-[0.98] {{ !request('status') ? 'bg-forest text-white border-forest font-bold' : 'bg-paper-2 text-ink border-line hover:bg-paper-3' }}">Semua</a>
+            <a href="{{ route('admin.laporan', ['status' => 'baru']) }}" class="min-h-[44px] px-3.5 py-2 rounded-md border flex items-center transition duration-fast active:scale-[0.98] {{ request('status') === 'baru' ? 'bg-warn text-white border-warn font-bold' : 'bg-paper-2 text-ink border-line hover:bg-paper-3' }}">Baru</a>
+            <a href="{{ route('admin.laporan', ['status' => 'terverifikasi']) }}" class="min-h-[44px] px-3.5 py-2 rounded-md border flex items-center transition duration-fast active:scale-[0.98] {{ request('status') === 'terverifikasi' ? 'bg-danger text-white border-danger font-bold' : 'bg-paper-2 text-ink border-line hover:bg-paper-3' }}">Terverifikasi</a>
+            <a href="{{ route('admin.laporan', ['status' => 'selesai']) }}" class="min-h-[44px] px-3.5 py-2 rounded-md border flex items-center transition duration-fast active:scale-[0.98] {{ request('status') === 'selesai' ? 'bg-forest text-white border-forest font-bold' : 'bg-paper-2 text-ink border-line hover:bg-paper-3' }}">Selesai</a>
         </div>
     </div>
 
     {{-- TABEL LAPORAN LENGKAP --}}
-    <div class="bg-paper-2 border border-line rounded-3xl overflow-hidden shadow-card">
+    <div class="bg-paper-2 border border-line rounded-lg overflow-hidden shadow-none">
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs font-mono">
-                <thead class="bg-paper border-b border-line uppercase text-ink-muted text-[11px]">
+            <table class="w-full text-left text-xs font-sans">
+                <thead class="bg-paper border-b border-line text-ink-muted text-xs">
                     <tr>
                         <th class="p-4">Nomor Tiket</th>
                         <th class="p-4">Zona & Koordinat</th>
@@ -41,43 +41,43 @@
                 </thead>
                 <tbody class="divide-y divide-line">
                     @forelse($laporans as $lp)
-                        <tr class="hover:bg-paper-3 transition">
+                        <tr class="hover:bg-paper-3 transition duration-fast">
                             <td class="p-4 font-bold text-ink whitespace-nowrap">
                                 {{ $lp->nomor_tiket }}
                             </td>
                             <td class="p-4">
                                 <div class="font-bold text-ink">{{ $lp->zona?->kode }} · {{ $lp->zona?->nama }}</div>
-                                <div class="text-[10px] text-ink-muted tabular-nums">{{ $lp->latitude }}, {{ $lp->longitude }}</div>
+                                <div class="text-xs text-ink-muted tabular-nums">{{ $lp->latitude }}, {{ $lp->longitude }}</div>
                             </td>
-                            <td class="p-4 uppercase text-ember font-semibold whitespace-nowrap">
+                            <td class="p-4 text-ember font-semibold whitespace-nowrap">
                                 {{ str_replace('_', ' ', $lp->jenis_temuan) }}
                             </td>
                             <td class="p-4">
                                 <div class="font-bold text-ink">{{ $lp->pelapor?->nama ?? 'Tamu (Tanpa Akun)' }}</div>
-                                <div class="text-[10px] text-ink-muted">
-                                    Skor Kepercayaan: <strong class="text-forest">{{ $lp->pelapor?->skor_kepercayaan ?? 50 }}</strong>/100
+                                <div class="text-xs text-ink-muted">
+                                    Skor Kepercayaan: <strong class="text-forest tabular-nums">{{ $lp->pelapor?->skor_kepercayaan ?? 50 }}</strong>/100
                                 </div>
                             </td>
                             <td class="p-4">
                                 @if($lp->foto_1)
-                                    <a href="{{ Storage::url($lp->foto_1) }}" target="_blank" class="w-10 h-10 rounded-lg overflow-hidden border border-line inline-block">
+                                    <a href="{{ Storage::url($lp->foto_1) }}" target="_blank" class="w-10 h-10 rounded-md overflow-hidden border border-line inline-block shadow-none">
                                         <img src="{{ Storage::url($lp->foto_1) }}" class="w-full h-full object-cover" alt="Foto">
                                     </a>
                                 @else
-                                    <span class="text-ink-muted text-[10px]">Tanpa foto</span>
+                                    <span class="text-ink-muted text-xs">Tanpa foto</span>
                                 @endif
                             </td>
                             <td class="p-4 whitespace-nowrap">
-                                <span class="px-2 py-0.5 rounded text-[10px] uppercase font-bold {{ $lp->status_tiket === 'terverifikasi' ? 'bg-danger text-white' : ($lp->status_tiket === 'baru' ? 'bg-amber-500 text-white' : 'bg-paper-3 text-ink') }}">
+                                <span class="px-2 py-0.5 rounded text-xs font-bold {{ $lp->status_tiket === 'terverifikasi' ? 'bg-danger text-white' : ($lp->status_tiket === 'baru' ? 'bg-warn-fill text-[#5C3D06] border border-warn/40' : 'bg-paper-3 text-ink border border-line') }}">
                                     {{ str_replace('_', ' ', $lp->status_tiket) }}
                                 </span>
                                 @if($lp->hasil_verifikasi)
-                                    <div class="text-[10px] text-ink-muted mt-0.5 font-bold">
+                                    <div class="text-xs text-ink-muted mt-0.5 font-bold">
                                         Hasil: {{ strtoupper(str_replace('_', ' ', $lp->hasil_verifikasi)) }}
                                     </div>
                                 @endif
                             </td>
-                            <td class="p-4 whitespace-nowrap text-ink-muted">
+                            <td class="p-4 whitespace-nowrap text-ink-muted tabular-nums">
                                 {{ $lp->created_at->format('d/m/Y H:i') }}
                             </td>
                         </tr>

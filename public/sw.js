@@ -1,6 +1,6 @@
-const CACHE_NAME = 'pyroguard-shell-v1';
+const CACHE_NAME = 'pyroguard-shell-v2';
 const TILES_CACHE = 'pyroguard-map-tiles-v1';
-const DATA_CACHE = 'pyroguard-data-v1';
+const DATA_CACHE = 'pyroguard-data-v2';
 
 const CORE_ASSETS = [
     '/',
@@ -8,10 +8,7 @@ const CORE_ASSETS = [
     '/metode',
     '/lapor',
     '/notifikasi',
-    '/demo',
     '/manifest.json',
-    '/icons/icon-192.png',
-    '/icons/icon-512.png',
     '/icons/icon.svg',
 ];
 
@@ -46,6 +43,10 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
     const { request } = event;
     const url = new URL(request.url);
+
+    if (request.method !== 'GET' || url.pathname.startsWith('/admin') || url.pathname.startsWith('/petugas') || url.pathname.startsWith('/api/v1/geospatial')) {
+        return;
+    }
 
     // 1. Tangani OpenStreetMap Map Tiles (Cache First / Stale-While-Revalidate)
     if (url.hostname.includes('tile.openstreetmap.org')) {

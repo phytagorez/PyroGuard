@@ -1,0 +1,55 @@
+{
+  "nama": "Batas administrasi sekitar Bromo",
+  "jenis": "batas_administrasi",
+  "jumlah_fitur": 10,
+  "crs": "EPSG:4326",
+  "arsip_asli": "Bromo.zip",
+  "sha256_arsip": "419d05e0cf9b915163b53c283b6246f1cd18c292f8b7f536c22efbf55740c5da",
+  "atribut_sumber": "TASWIL1000020230928_DATA_BATAS_KABUPATEN",
+  "atribut_pembaruan": "Lapak GIS - 2024",
+  "status_verifikasi": "Belum diverifikasi terhadap penerbit resmi",
+  "bukan_batas_tnbts": true,
+  "geometri": "MultiPolygon 2D; koordinat XY dan seluruh ring dipertahankan; Z dari shapefile tidak digunakan pada peta web",
+  "bbox": [
+    112.28740688472,
+    -8.463946964280904,
+    113.64356000029383,
+    -7.19175269782869
+  ],
+  "wilayah": [
+    "Wilayah tanpa nama 1",
+    "Wilayah tanpa nama 2",
+    "Malang",
+    "Lumajang",
+    "Probolinggo",
+    "Pasuruan",
+    "Kota Malang",
+    "Kota Probolinggo",
+    "Kota Pasuruan",
+    "Kota Batu"
+  ],
+  "lapisan_qgis_tidak_tersedia": [
+    "BatasWilayah",
+    "Batas Kabupaten Jawa Timur",
+    "JawaTimur"
+  ],
+  "gee": {
+    "url": "https://code.earthengine.google.com/810c3859c672e13696eb02c679514372",
+    "asset_wilayah": "projects/pyroguard-513617/assets/Wilayah",
+    "status": "kode_diterima_menunggu_hasil_ekspor",
+    "tanggal_referensi_pengguna": "2023-08-29",
+    "lokasi_referensi_pengguna": "Bantengan",
+    "koordinat_referensi": [
+      112.953,
+      -7.9425
+    ],
+    "koleksi": [
+      "COPERNICUS/S2_SR_HARMONIZED",
+      "UCSB-CHG/CHIRPS/DAILY",
+      "MODIS/061/MOD11A1",
+      "NASA/VIIRS/002/VNP14A1"
+    ]
+  },
+  "catatan": "Lapisan administrasi dari file lampiran. Tidak mewakili batas taman nasional, risiko kebakaran, maupun titik panas. Zona BRM merupakan titik referensi operasional, bukan batas resmi. Data operasional tersimpan belum memiliki bukti asal observasi.",
+  "peta_dasar_qgis": "OSM Standard"
+}

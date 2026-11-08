@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\DatasetGeospasialController;
 use App\Http\Controllers\Api\V1\LaporanAsapController;
 use App\Http\Controllers\Api\V1\PrakiraanRisikoController;
 use App\Http\Controllers\Api\V1\StatusSiagaController;
@@ -20,6 +21,10 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix('v1')->group(function () {
+    Route::get('/geospatial', [DatasetGeospasialController::class, 'index'])->name('api.dataset.index');
+    Route::get('/geospatial/boundaries', [DatasetGeospasialController::class, 'batas'])->name('api.dataset.batas');
+    Route::get('/geospatial/area', [DatasetGeospasialController::class, 'wilayah'])->name('api.dataset.wilayah');
+
     // 1. Prakiraan Risiko per Zona (Kontrak Utama §16.2)
     Route::get('/forecast/risk-zone', [PrakiraanRisikoController::class, 'show']);
 

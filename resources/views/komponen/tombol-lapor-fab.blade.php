@@ -1,5 +1,5 @@
 <div class="fixed bottom-20 inset-x-4 z-40 lg:hidden flex justify-center pointer-events-none">
-    <a 
+    <a
         href="{{ url('/lapor') }}"
         class="pointer-events-auto flex items-center justify-center gap-3 w-full max-w-sm h-14 bg-ember text-white rounded-full shadow-sheet font-display font-bold text-base tracking-wide hover:brightness-105 active:scale-98 transition duration-fast"
         style="padding-bottom: env(safe-area-inset-bottom, 0px);"

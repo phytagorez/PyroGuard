@@ -7,7 +7,7 @@
     {{-- HEADER LAYAR & FILTER PERLU TINJAUAN --}}
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-            <span class="font-mono text-xs font-bold text-forest uppercase tracking-wider">MODUL FR-ENG-05</span>
+
             <h1 class="text-2xl font-display font-bold text-ink tracking-tight mt-0.5">
                 Tinjauan Prediksi Risiko 6 Zona Bromo
             </h1>
@@ -17,19 +17,19 @@
         </div>
 
         <div class="flex items-center gap-2">
-            <a 
+            <a
                 href="{{ route('admin.tinjauan', ['perlu_tinjauan' => $hanyaPerluTinjauan ? 0 : 1]) }}"
-                class="min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-mono font-semibold border transition flex items-center gap-2 {{ $hanyaPerluTinjauan ? 'bg-danger text-white border-danger shadow-sm' : 'bg-paper-2 text-ink border-line hover:bg-paper-3' }}"
+                class="min-h-[44px] px-3.5 py-2 rounded-md text-xs font-sans font-semibold border transition duration-fast active:scale-[0.98] flex items-center gap-2 {{ $hanyaPerluTinjauan ? 'bg-danger text-white border-danger shadow-none' : 'bg-paper-2 text-ink border-line hover:bg-paper-3' }}"
             >
-                <span>⚠️ Filter: Perlu Tinjauan Saja</span>
+                <span> Filter: Perlu Tinjauan Saja</span>
                 @if($hanyaPerluTinjauan)
                     <span class="w-2 h-2 rounded-full bg-white"></span>
                 @endif
             </a>
 
-            <a 
+            <a
                 href="{{ route('admin.siaga') }}"
-                class="min-h-[40px] px-4 py-2 rounded-xl text-xs font-mono font-bold bg-forest hover:bg-moss text-white transition flex items-center gap-1.5 shadow-sm"
+                class="min-h-[44px] px-4 py-2 rounded-md text-xs font-sans font-bold bg-forest hover:bg-moss text-white transition duration-fast active:scale-[0.98] flex items-center gap-1.5 shadow-none"
             >
                 <span>Persetujuan Siaga →</span>
             </a>
@@ -37,10 +37,10 @@
     </div>
 
     {{-- TABEL 6 ZONA MATRIKS PREDIKSI LENGKAP (§7.8) --}}
-    <div class="bg-paper-2 border border-line rounded-3xl overflow-hidden shadow-card">
+    <div class="bg-paper-2 border border-line rounded-lg overflow-hidden shadow-none">
         <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs font-mono">
-                <thead class="bg-paper border-b border-line uppercase text-ink-muted text-[11px]">
+            <table class="w-full text-left text-xs font-sans">
+                <thead class="bg-paper border-b border-line text-ink-muted text-xs">
                     <tr>
                         <th class="p-4">Kode & Zona</th>
                         <th class="p-4">Kategori Risiko</th>
@@ -65,11 +65,11 @@
                             $siaga = $r?->status_siaga ?? 'AMAN';
                             $isBahaya = $kategori === 'BAHAYA' || in_array($siaga, ['SIAGA_1', 'SIAGA_OTOMATIS']);
                         @endphp
-                        <tr class="hover:bg-paper-3 transition {{ $isBahaya ? 'bg-danger/5' : '' }}">
+                        <tr class="hover:bg-paper-3 transition duration-fast {{ $isBahaya ? 'bg-danger/5' : '' }}">
                             {{-- 1. Kode & Nama --}}
                             <td class="p-4">
                                 <div class="font-bold text-ink text-sm">{{ $zona->kode }}</div>
-                                <div class="text-ink-muted text-[11px] font-sans">{{ $zona->nama }}</div>
+                                <div class="text-ink-muted text-xs font-sans">{{ $zona->nama }}</div>
                             </td>
 
                             {{-- 2. Kategori Badge --}}
@@ -80,17 +80,17 @@
                             {{-- 3. CDD Aktual --}}
                             <td class="p-4">
                                 <span class="font-bold text-ink text-sm tabular-nums">{{ $cdd }}</span>
-                                <span class="text-ink-muted text-[10px]">hari</span>
+                                <span class="text-ink-muted text-xs">hari</span>
                             </td>
 
                             {{-- 4. Tiga Chip Proyeksi --}}
                             <td class="p-4 text-center">
-                                <div class="inline-flex items-center gap-1.5 bg-paper px-2 py-1 rounded-lg border border-line text-[10px]">
-                                    <span class="text-ink-muted">+24j: <strong class="text-ink">{{ $p24 }}h</strong></span>
+                                <div class="inline-flex items-center gap-1.5 bg-paper px-2.5 py-1 rounded-md border border-line text-xs">
+                                    <span class="text-ink-muted tabular-nums">+24j: <strong class="text-ink">{{ $p24 }}h</strong></span>
                                     <span>•</span>
-                                    <span class="text-ink-muted">+48j: <strong class="text-ink">{{ $p48 }}h</strong></span>
+                                    <span class="text-ink-muted tabular-nums">+48j: <strong class="text-ink">{{ $p48 }}h</strong></span>
                                     <span>•</span>
-                                    <span class="text-ink-muted">+72j: <strong class="text-danger">{{ $p72 }}h</strong></span>
+                                    <span class="text-ink-muted tabular-nums">+72j: <strong class="text-danger">{{ $p72 }}h</strong></span>
                                 </div>
                             </td>
 
@@ -100,7 +100,7 @@
                                     <span class="font-bold tabular-nums text-sm {{ $fdi >= 80 ? 'text-danger' : ($fdi >= 41 ? 'text-warn' : 'text-forest') }}">
                                         {{ $fdi }}
                                     </span>
-                                    <span class="text-ink-muted text-[10px]">/100</span>
+                                    <span class="text-ink-muted text-xs">/100</span>
                                 </div>
                                 <div class="w-16 h-1.5 bg-paper-3 rounded-full overflow-hidden mt-1">
                                     <div class="h-full rounded-full {{ $fdi >= 80 ? 'bg-danger' : ($fdi >= 41 ? 'bg-warn' : 'bg-safe') }}" style="width: {{ $fdi }}%;"></div>
@@ -110,34 +110,34 @@
                             {{-- 6. Status Siaga --}}
                             <td class="p-4">
                                 @if($siaga === 'SIAGA_1')
-                                    <span class="px-2 py-0.5 rounded text-[10px] bg-danger text-white font-bold animate-pulse">
+                                    <span class="px-2 py-0.5 rounded text-xs bg-danger text-white font-bold animate-pulse">
                                         SIAGA 1 (AKTIF)
                                     </span>
                                 @elseif($siaga === 'SIAGA_OTOMATIS')
-                                    <span class="px-2 py-0.5 rounded text-[10px] bg-amber-500 text-white font-bold">
+                                    <span class="px-2 py-0.5 rounded text-xs bg-warn-fill text-[#5C3D06] border border-warn/40 font-bold">
                                         SIAGA AUTO (PERLU BPBD)
                                     </span>
                                 @else
-                                    <span class="text-ink-muted text-[11px]">-</span>
+                                    <span class="text-ink-muted text-xs">-</span>
                                 @endif
                             </td>
 
                             {{-- 7. Waktu Update --}}
-                            <td class="p-4 text-ink-muted text-[11px]">
+                            <td class="p-4 text-ink-muted text-xs tabular-nums">
                                 {{ $r?->dihitung_pada ? \Carbon\Carbon::parse($r->dihitung_pada)->format('H:i') . ' WIB' : '07:00 WIB' }}
                             </td>
 
                             {{-- 8. Aksi --}}
                             <td class="p-4 text-right">
                                 @if($siaga === 'SIAGA_OTOMATIS' || $isBahaya)
-                                    <a 
-                                        href="{{ route('admin.siaga') }}" 
-                                        class="inline-block px-3 py-1.5 bg-danger hover:brightness-110 text-white rounded-lg text-xs font-bold transition shadow-xs"
+                                    <a
+                                        href="{{ route('admin.siaga') }}"
+                                        class="inline-block px-3 py-1.5 bg-danger hover:brightness-110 text-white rounded-md text-xs font-bold transition duration-fast shadow-none min-h-[36px] leading-[24px]"
                                     >
                                         Tinjau Siaga
                                     </a>
                                 @else
-                                    <span class="text-ink-muted text-[11px]">Stabil</span>
+                                    <span class="text-ink-muted text-xs">Stabil</span>
                                 @endif
                             </td>
                         </tr>

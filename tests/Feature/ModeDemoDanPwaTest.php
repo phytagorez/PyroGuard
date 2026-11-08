@@ -129,6 +129,6 @@ test('manifest pwa dan service worker berstatus valid dan dapat dibaca', functio
     expect(file_exists($swPath))->toBeTrue();
 
     $swContent = file_get_contents($swPath);
-    expect($swContent)->toContain('pyroguard-shell-v1')
+    expect($swContent)->toContain('pyroguard-shell-v2')
         ->and($swContent)->toContain('tile.openstreetmap.org');
 });

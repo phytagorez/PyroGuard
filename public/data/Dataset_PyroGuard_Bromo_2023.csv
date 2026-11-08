@@ -1,0 +1,2 @@
+system:index,Hujan_7_Hari,Hujan_Harian,Jumlah_Hotspot_Piksel,Keterangan,Latitude,Lokasi,Longitude,NBR_sebelum,NBR_sesudah,NDMI_sebelum,NDMI_sesudah,NDVI_sebelum,NDVI_sesudah,Periode_Sebelum,Periode_Sesudah,Suhu_Permukaan,Tanggal_Kebakaran,.geo
+0,3.5645214247794543,0.0,0.0,Kejadian kebakaran,-7.9425,Bantengan,112.953,0.403727522884299,0.3399433691612193,0.17654826365477155,0.1271151828507255,0.6208224096835582,0.5678679567263896,30 hari,30 hari,30.07954131542477,2023-08-29,"{""type"":""MultiPoint"",""coordinates"":[]}"

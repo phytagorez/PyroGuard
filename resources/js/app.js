@@ -4,11 +4,17 @@ import Swal from 'sweetalert2';
 import 'preline';
 import Chart from 'chart.js/auto';
 import L from 'leaflet';
+import pantauanPeta from './pantauan';
+import laporAsap from './laporAsap';
+import petugasTiket from './petugasTiket';
 
 window.Alpine = Alpine;
 window.Swal = Swal;
 window.Chart = Chart;
 window.L = L;
+window.pantauanPeta = pantauanPeta;
+window.laporAsap = laporAsap;
+window.petugasTiket = petugasTiket;
 
 // Auto-init Preline UI on load and Alpine page updates
 document.addEventListener('DOMContentLoaded', () => {
@@ -28,7 +34,7 @@ window.toggleModeTerangTinggi = function () {
     return isHigh;
 };
 
-// Registrasi Progressive Web App (PWA) Service Worker (§12 & §18)
+// Registrasi Progressive Web App (PWA) Service Worker (Â§12 & Â§18)
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('/sw.js').catch((err) => {

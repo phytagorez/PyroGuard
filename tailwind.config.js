@@ -46,10 +46,20 @@ export default {
                 sheet: '0 -12px 40px rgba(20, 32, 26, 0.14)',
                 card: '0 2px 0 rgba(20, 32, 26, 0.04), 0 8px 24px rgba(20, 32, 26, 0.06)',
             },
+            borderRadius: {
+                sm: '8px',
+                md: '12px',
+                lg: '18px',
+                xl: '26px',
+                full: '9999px',
+            },
             transitionDuration: {
                 fast: '120ms',
                 base: '220ms',
                 slow: '420ms',
+            },
+            transitionTimingFunction: {
+                base: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
             },
         },
     },

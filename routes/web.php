@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AutentikasiController;
+use App\Http\Controllers\DatasetGeospasialController;
 use App\Http\Controllers\EvakuasiController;
 use App\Http\Controllers\GoogleOAuthController;
 use App\Http\Controllers\LaporanAsapController;
@@ -65,6 +66,8 @@ Route::middleware(['auth', 'peran:petugas,admin'])->prefix('petugas')->name('pet
 
 // Dasbor Otoritas Admin BPBD (§6.10, §7.8, §14) - Terproteksi RBAC Admin
 Route::middleware(['auth', 'peran:admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/dataset', [DatasetGeospasialController::class, 'index'])->name('dataset');
+    Route::post('/dataset', [DatasetGeospasialController::class, 'store'])->middleware('throttle:10,1')->name('dataset.impor');
     Route::get('/', fn () => redirect()->route('admin.tinjauan'));
     Route::get('/tinjauan', [AdminController::class, 'tinjauan'])->name('tinjauan');
     Route::get('/siaga', [AdminController::class, 'siaga'])->name('siaga');
