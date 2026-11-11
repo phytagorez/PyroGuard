@@ -8,6 +8,7 @@ export default function pantauanPeta(zonas, hotspots, sumberAir, datasetUrl) {
     const groups = {};
     const markers = {};
     const bases = {};
+    let layerDesa;
     let requests = 0;
     return {
         zonas, terpilih: zonas[0] || null, pencarian: '', petaDasar: 'topografi',
@@ -29,6 +30,7 @@ export default function pantauanPeta(zonas, hotspots, sumberAir, datasetUrl) {
                 bases.topografi.addTo(map);
                 groups.zona = L.featureGroup().addTo(map);
                 groups.operasional = L.featureGroup();
+                groups.desa = L.featureGroup().addTo(map);
                 zonas.forEach(z => {
                     const marker = L.circleMarker([z.titik_tengah_lat, z.titik_tengah_lng], { radius: 7, color: '#ffffff', weight: 2, fillColor: '#1b6c63', fillOpacity: 1 }).addTo(groups.zona);
                     marker.bindTooltip(textNode(`${z.kode} · ${z.nama}`), { direction: 'top' });
@@ -38,8 +40,11 @@ export default function pantauanPeta(zonas, hotspots, sumberAir, datasetUrl) {
                 hotspots.forEach(h => L.circleMarker([h.latitude, h.longitude], { radius: 5, color: '#a93632', fillOpacity: 0.7 }).bindTooltip(textNode('Titik panas tersimpan · asal belum diverifikasi')).addTo(groups.operasional));
                 sumberAir.forEach(s => L.circleMarker([s.latitude, s.longitude], { radius: 5, color: '#276a8d', fillOpacity: 0.8 }).bindTooltip(textNode(`${s.nama} · data tersimpan belum diverifikasi`)).addTo(groups.operasional));
                 this.muatDataset();
+                this.muatDesa();
                 if (zonas[0]) { this.pilihZona(zonas[0].kode, false); }
             });
+            
+
         },
         async muatDataset() {
             const request = ++requests;
@@ -68,6 +73,98 @@ export default function pantauanPeta(zonas, hotspots, sumberAir, datasetUrl) {
                 if (request === requests) { this.kesalahan = 'Dataset gagal dimuat. Periksa koneksi lalu coba lagi.'; }
             } finally { if (request === requests) { this.memuat = false; } }
         },
+
+        async muatDesa() {
+    try {
+        const response = await fetch('/api/v1/zones', {
+            headers: { Accept: 'application/json' }
+        });
+
+        if (!response.ok) {
+            throw new Error('API desa gagal');
+        }
+
+        const payload = await response.json();
+
+        if (layerDesa) {
+            layerDesa.remove();
+        }
+
+        layerDesa = L.geoJSON({
+            type: 'FeatureCollection',
+            features: payload.data.map(z => ({
+                type: 'Feature',
+                geometry: z.poligon_geojson,
+                properties: {
+                    nama: z.nama,
+                    kode: z.kode,
+                    analisis: z.data_analisis,
+                    kelas: z.kelas
+                }
+            }))
+        }, {
+            style: feature => {
+                const kelas = feature.properties.kelas;
+
+                const warna = {
+                    'Rendah': '#22c55e',
+                    'Sedang': '#eab308',
+                    'Tinggi': '#ef4444'
+                };
+
+                return {
+                    color: warna[kelas] || '#64748b',
+                    weight: 1.5,
+                    fillColor: warna[kelas] || '#64748b',
+                    fillOpacity: 0.35
+                };
+            },
+
+            onEachFeature: (feature, layer) => {
+                const p = feature.properties;
+                const a = p.analisis || {};
+
+                const popup = document.createElement('div');
+
+                const judul = document.createElement('strong');
+                judul.textContent = p.nama;
+                popup.appendChild(judul);
+
+                const informasi = [
+                    ['Kelas risiko', p.kelas],
+                    ['Skor gabungan', a.Skor_Gabungan],
+                    ['NDVI sebelum', a.NDVI_sebelum],
+                    ['NDVI sesudah', a.NDVI_sesudah],
+                    ['NDMI sebelum', a.NDMI_sebelum],
+                    ['NDMI sesudah', a.NDMI_sesudah],
+                    ['NBR sebelum', a.NBR_sebelum],
+                    ['NBR sesudah', a.NBR_sesudah],
+                    ['dNBR', a.dNBR],
+                    ['Suhu permukaan', a.Suhu_Permukaan_C],
+                    ['Lereng', a.Lereng_derajat],
+                    ['Hujan 7 hari', a.Hujan_7_Hari_mm],
+                    ['Hotspot piksel', a.Hotspot_Piksel]
+                ];
+
+                informasi.forEach(([label, nilai]) => {
+                    const baris = document.createElement('div');
+                    baris.textContent =
+                        `${label}: ${nilai ?? '—'}`;
+                    popup.appendChild(baris);
+                });
+
+                layer.bindPopup(popup);
+                layer.bindTooltip(p.nama);
+            }
+        });
+
+        groups.desa.addLayer(layerDesa);
+
+    } catch (error) {
+        console.error('Gagal memuat polygon desa:', error);
+        this.kesalahan = 'Polygon desa gagal dimuat dari API.';
+    }
+},
         aturLapisan(nama) { const layer = groups[nama]; if (layer && map) { if (this.lapisan[nama]) { layer.addTo(map); } else { layer.remove(); } } },
         gantiPeta(nama) { if (!map || !bases[nama]) { return; } Object.values(bases).forEach(l => l.remove()); this.petaDasar = nama; bases[nama].addTo(map); },
         fokusBromo() { if (groups.wilayah && groups.wilayah.getBounds().isValid()) { map.fitBounds(groups.wilayah.getBounds(), { padding: [24, 24], maxZoom: 12 }); } else if (groups.zona?.getBounds().isValid()) { map.fitBounds(groups.zona.getBounds(), { padding: [38, 38], maxZoom: 12 }); } else { map.setView([-7.95, 112.95], 11); } },

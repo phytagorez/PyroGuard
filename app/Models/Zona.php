@@ -26,30 +26,35 @@ class Zona extends Model
      *
      * @var array<int, string>
      */
-    protected $fillable = [
-        'kode',
-        'nama',
-        'deskripsi_lokasi',
-        'jenis_lahan',
-        'akses_wisata',
-        'poligon_geojson',
-        'titik_tengah_lat',
-        'titik_tengah_lng',
-    ];
+    
+protected $fillable = [
+    'kode',
+    'nama',
+    'deskripsi_lokasi',
+    'jenis_lahan',
+    'akses_wisata',
+    'poligon_geojson',
+    'titik_tengah_lat',
+    'titik_tengah_lng',
+    'data_analisis',
+];
+
 
     /**
      * Pemetaan tipe data atribut.
      *
      * @return array<string, string>
      */
-    protected function casts(): array
-    {
-        return [
-            'poligon_geojson' => 'array',
-            'titik_tengah_lat' => 'float',
-            'titik_tengah_lng' => 'float',
-        ];
-    }
+protected function casts(): array
+{
+    return [
+        'poligon_geojson' => 'array',
+        'data_analisis' => 'array',
+        'titik_tengah_lat' => 'decimal:7',
+        'titik_tengah_lng' => 'decimal:7',
+    ];
+}
+
 
     /**
      * Relasi riwayat cuaca harian zona.

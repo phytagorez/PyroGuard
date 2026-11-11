@@ -23,11 +23,22 @@
                 <div class="map-caption"><span class="map-boundary-key"></span><span>Batas administrasi · Bromo.zip</span></div>
             </div>
             <div class="map-layers" aria-label="Lapisan peta">
+                <label>
+                    <input type="checkbox"
+                        x-model="lapisan.desa"
+                        @change="aturLapisan('desa')">
+                    Polygon desa
+                </label>
                 <label><input type="checkbox" x-model="lapisan.administrasi" @change="aturLapisan('administrasi')"> Batas administrasi</label>
                 <label><input type="checkbox" x-model="lapisan.wilayah" @change="aturLapisan('wilayah')" :disabled="!wilayahTersedia"> Wilayah analisis GEE</label>
                 <label><input type="checkbox" x-model="lapisan.zona" @change="aturLapisan('zona')"> Referensi zona</label>
                 <label><input type="checkbox" x-model="lapisan.operasional" @change="aturLapisan('operasional')"> Logistik & titik panas tersimpan</label>
             </div>
+            <div class="risk-legend">
+    <span><i class="risk-low"></i> Rendah</span>
+    <span><i class="risk-medium"></i> Sedang</span>
+    <span><i class="risk-high"></i> Tinggi</span>
+</div>
             <div class="map-footnote"><span>Poligon = wilayah · Point = lokasi / referensi zona</span><span>WGS 84 / EPSG:4326</span></div>
         </section>
         <aside class="zone-inspector" aria-label="Detail zona">

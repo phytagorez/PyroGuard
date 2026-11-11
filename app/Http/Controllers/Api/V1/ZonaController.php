@@ -34,6 +34,9 @@ class ZonaController extends Controller
                     'lng' => $zona->titik_tengah_lng,
                 ],
                 'poligon_geojson' => $zona->poligon_geojson,
+                'data_analisis' => $zona->data_analisis,
+                'kelas' => $zona->data_analisis['Kelas'] ?? null,
+                'label' => $zona->data_analisis['Label'] ?? $zona->nama,
                 'risiko' => $risiko ? [
                     'cdd' => $risiko->hari_tanpa_hujan,
                     'proyeksi' => [

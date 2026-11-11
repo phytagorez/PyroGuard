@@ -379,3 +379,30 @@ html.mode-terang-tinggi { --frame: #fff; --line: #52625b; --ink-muted: #23372e; 
 .offline-panel > div { display: flex; justify-content: space-between; gap: 20px; font-size: 13px; }
 .offline-panel a, .offline-panel button { min-height: 44px; display: flex; align-items: center; text-decoration: underline; }
 @media (max-width:720px) { .offline-panel { bottom: 76px; left: 16px; right: 16px; max-width: none; } }
+
+
+/* Legenda kelas risiko desa */
+.risk-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    padding: 12px 16px;
+    font-size: 12px;
+}
+
+.risk-legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.risk-legend i {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.risk-low { background: #22c55e; }
+.risk-medium { background: #eab308; }
+.risk-high { background: #ef4444; }
