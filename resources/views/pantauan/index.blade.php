@@ -22,6 +22,36 @@
                 <div class="map-error" x-show="kesalahan" x-cloak role="status"><span x-text="kesalahan"></span><button type="button" @click="muatDataset()">Coba lagi</button></div>
                 <div class="map-caption"><span class="map-boundary-key"></span><span>Batas administrasi · Bromo.zip</span></div>
             </div>
+
+            <button
+                class="primary-button"
+                type="button"
+                @click="lokasiSaya()"
+                :disabled="memuatLokasi">
+                <span x-text="memuatLokasi
+                    ? 'Mencari lokasi...'
+                    : '⌖ Lokasi Saya'">
+                </span>
+            </button>
+
+            <div x-show="lokasiPengguna" x-cloak class="location-info">
+    <template x-if="desaPengguna">
+        <div>
+            <strong>Desa: </strong>
+            <span x-text="desaPengguna.nama"></span>
+            <br>
+            <strong>Kelas risiko: </strong>
+            <span x-text="desaPengguna.kelas"></span>
+        </div>
+    </template>
+
+    <template x-if="!desaPengguna">
+        <div>
+            Anda berada di luar wilayah analisis PyroGuard.
+        </div>
+    </template>
+</div>
+
             <div class="map-layers" aria-label="Lapisan peta">
                 <label>
                     <input type="checkbox"
