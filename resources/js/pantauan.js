@@ -47,33 +47,71 @@ function titikDalamGeoJSON(titik, geometry) {
     return false;
 }
 
+const WARNA_KELAS = { Tinggi: '#c43d22', Sedang: '#dd9f17', Rendah: '#3f8f68' };
+const WARNA_NETRAL = '#7b8a86';
+const URUTAN_KELAS = ['Tinggi', 'Sedang', 'Rendah'];
+const CATATAN_KELAS = { Tinggi: 'Skor relatif 0,66 ke atas', Sedang: 'Skor relatif 0,40–0,65', Rendah: 'Skor relatif di bawah 0,40' };
+const gerakDikurangi = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const angka = (v) => (v === null || v === undefined || v === '' || Number.isNaN(Number(v))) ? null : Number(v);
+
+function siapkanDesa(zona) {
+    const a = zona.data_analisis || {};
+    const kelas = zona.kelas || a.Kelas || null;
+    return {
+        kode: zona.kode,
+        nama: zona.nama,
+        label: a.Label || zona.nama,
+        kecamatan: a.Kecamatan || null,
+        kabupaten: a.Kabupaten || null,
+        kelas: URUTAN_KELAS.includes(kelas) ? kelas : null,
+        skor: angka(a.Skor_Gabungan),
+        kerentanan: angka(a.Skor_Kerentanan),
+        dampak: angka(a.Skor_Dampak),
+        a,
+        lat: Number(zona.titik_tengah_lat),
+        lng: Number(zona.titik_tengah_lng),
+        deskripsi: zona.deskripsi_lokasi || '',
+        jenisLahan: zona.jenis_lahan || '',
+        geometri: zona.poligon_geojson || null,
+    };
+}
+
 export default function pantauanPeta(zonas, hotspots, sumberAir, datasetUrl) {
-    // Leaflet objects stay outside Alpine's reactive proxies.
+    // Objek Leaflet disimpan di luar proxy reaktif Alpine.
     let map;
     const groups = {};
-    const markers = {};
     const bases = {};
+    const layerDesa = {};
     let markerLokasiPengguna = null;
-    let layerDesa = null;
     let requests = 0;
+
     return {
-        zonas, terpilih: zonas[0] || null, pencarian: '', petaDasar: 'topografi',
+        desa: zonas.map(siapkanDesa),
+        desaTerpilih: null,
+        kelasAktif: null,
+        pencarian: '',
+        petaDasar: 'topografi',
         memuat: true, kesalahan: '', wilayahTersedia: false, analisis: [],
-        lokasiPengguna: null,
-        desaPengguna: null,
-        memuatLokasi: false,
-        desaSiap: false,
-        lapisan: {
-                administrasi: true,
-                wilayah: true,
-                zona: true,
-                operasional: false,
-                desa: true
-            },
+        lokasiPengguna: null, desaPengguna: null, memuatLokasi: false, luarWilayah: false,
+        tampilHitung: { Tinggi: 0, Sedang: 0, Rendah: 0 },
+        kelasList: URUTAN_KELAS.map(nama => ({ nama, kunci: nama.toLowerCase(), catatan: CATATAN_KELAS[nama] })),
+        lapisan: { administrasi: false, wilayah: false, desa: true, titik: false, operasional: false },
         kolomAnalisis: [['NDVI_sebelum', 'NDVI sebelum', ''], ['NDVI_sesudah', 'NDVI sesudah', ''], ['NDMI_sebelum', 'NDMI sebelum', ''], ['NDMI_sesudah', 'NDMI sesudah', ''], ['NBR_sebelum', 'NBR sebelum', ''], ['NBR_sesudah', 'NBR sesudah', ''], ['Hujan_Harian', 'Hujan harian', 'mm'], ['Hujan_7_Hari', 'Hujan 7 hari', 'mm'], ['Suhu_Permukaan', 'Suhu permukaan', '°C'], ['Jumlah_Hotspot_Piksel', 'Deteksi piksel VIIRS', '']],
-        get zonaTerfilter() { const q = this.pencarian.toLocaleLowerCase('id'); return this.zonas.filter(z => `${z.kode} ${z.nama}`.toLocaleLowerCase('id').includes(q)); },
-        get risiko() { return this.terpilih?.risiko_terbaru || null; },
-        get koordinatZona() { return this.terpilih ? `${Number(this.terpilih.titik_tengah_lat).toFixed(5)}, ${Number(this.terpilih.titik_tengah_lng).toFixed(5)}` : '—'; },
+
+        get hitung() {
+            const h = { Tinggi: 0, Sedang: 0, Rendah: 0 };
+            this.desa.forEach(d => { if (d.kelas) h[d.kelas]++; });
+            return h;
+        },
+        get tanpaKelas() { return this.desa.filter(d => !d.kelas).length; },
+        get daftarTampil() {
+            const q = this.pencarian.trim().toLocaleLowerCase('id');
+            return this.desa
+                .filter(d => (!this.kelasAktif || d.kelas === this.kelasAktif))
+                .filter(d => !q || `${d.nama} ${d.label} ${d.kode}`.toLocaleLowerCase('id').includes(q))
+                .sort((a, b) => (b.skor ?? -1) - (a.skor ?? -1));
+        },
+
         init() {
             this.$nextTick(() => {
                 map = L.map('petaPantauan', { center: [-7.95, 112.95], zoom: 11, zoomControl: false, scrollWheelZoom: false });
@@ -82,233 +120,188 @@ export default function pantauanPeta(zonas, hotspots, sumberAir, datasetUrl) {
                 bases.topografi = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', { maxZoom: 17, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> · <a href="https://opentopomap.org">OpenTopoMap</a> (CC-BY-SA)' });
                 bases.jalan = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' });
                 bases.topografi.on('tileerror', () => { if (this.petaDasar === 'topografi') { this.gantiPeta('jalan'); this.kesalahan = 'Peta topografi tidak tersedia. Peta jalan ditampilkan.'; } });
-                bases.jalan.on('tileerror', () => { this.kesalahan = 'Sebagian peta dasar gagal dimuat. Batas dan referensi tetap dapat dilihat.'; });
+                bases.jalan.on('tileerror', () => { this.kesalahan = 'Sebagian peta dasar gagal dimuat. Batas dan desa tetap dapat dilihat.'; });
                 bases.topografi.addTo(map);
-                groups.zona = L.featureGroup().addTo(map);
-                groups.operasional = L.featureGroup();
+
+                // Zoom dengan scroll baru aktif setelah peta diklik, supaya halaman tetap bisa di-scroll.
+                map.on('click', () => map.scrollWheelZoom.enable());
+                map.on('mouseout', () => map.scrollWheelZoom.disable());
+
                 groups.desa = L.featureGroup().addTo(map);
-                zonas.forEach(z => {
-                    const marker = L.circleMarker([z.titik_tengah_lat, z.titik_tengah_lng], { radius: 7, color: '#ffffff', weight: 2, fillColor: '#1b6c63', fillOpacity: 1 }).addTo(groups.zona);
-                    marker.bindTooltip(textNode(`${z.kode} · ${z.nama}`), { direction: 'top' });
-                    marker.on('click', () => this.pilihZona(z.kode, false));
-                    markers[z.kode] = marker;
+                groups.titik = L.featureGroup();
+                groups.operasional = L.featureGroup();
+                this.desa.forEach(d => {
+                    const m = L.circleMarker([d.lat, d.lng], { radius: 5, color: '#fff', weight: 2, fillColor: '#172023', fillOpacity: 1 }).addTo(groups.titik);
+                    m.bindTooltip(textNode(d.nama), { direction: 'top' });
+                    m.on('click', () => this.pilihDesa(d.kode));
                 });
                 hotspots.forEach(h => L.circleMarker([h.latitude, h.longitude], { radius: 5, color: '#a93632', fillOpacity: 0.7 }).bindTooltip(textNode('Titik panas tersimpan · asal belum diverifikasi')).addTo(groups.operasional));
                 sumberAir.forEach(s => L.circleMarker([s.latitude, s.longitude], { radius: 5, color: '#276a8d', fillOpacity: 0.8 }).bindTooltip(textNode(`${s.nama} · data tersimpan belum diverifikasi`)).addTo(groups.operasional));
-                this.muatDataset();
-                this.muatDesa();
-                if (zonas[0]) { this.pilihZona(zonas[0].kode, false); }
-            });
-            
 
+                this.muatDataset();
+                this.siapkanPoligon();
+            });
+            this.animasiHitung();
         },
+
+        // Hitung naik sekali saat halaman dibuka; dilewati bila pengguna meminta gerak dikurangi.
+        animasiHitung() {
+            const target = this.hitung;
+            if (gerakDikurangi()) { this.tampilHitung = { ...target }; return; }
+            const mulai = performance.now(); const durasi = 900;
+            const langkah = (t) => {
+                const p = Math.min(1, (t - mulai) / durasi); const e = 1 - Math.pow(1 - p, 3);
+                this.tampilHitung = { Tinggi: Math.round(target.Tinggi * e), Sedang: Math.round(target.Sedang * e), Rendah: Math.round(target.Rendah * e) };
+                if (p < 1) { requestAnimationFrame(langkah); }
+            };
+            requestAnimationFrame(langkah);
+        },
+
+        async siapkanPoligon() {
+            try {
+                if (this.desa.some(d => !d.geometri)) {
+                    const response = await fetch('/api/v1/zones', { headers: { Accept: 'application/json' } });
+                    if (!response.ok) { throw new Error('API desa gagal'); }
+                    const payload = await response.json();
+                    const peta = Object.fromEntries((payload.data || []).map(z => [z.kode, z.poligon_geojson]));
+                    this.desa.forEach(d => { d.geometri = d.geometri || peta[d.kode] || null; });
+                }
+                this.gambarDesa();
+            } catch (error) {
+                this.kesalahan = 'Poligon desa gagal dimuat. Daftar desa tetap bisa dipakai.';
+            }
+        },
+
+        gambarDesa() {
+            groups.desa.clearLayers();
+            this.desa.forEach(d => {
+                if (!d.geometri) { return; }
+                const layer = L.geoJSON({ type: 'Feature', geometry: d.geometri, properties: {} }, { style: this.gaya(d) });
+                layer.eachLayer(l => {
+                    l.on('click', () => this.pilihDesa(d.kode));
+                    l.on('mouseover', () => { if (this.desaTerpilih?.kode !== d.kode) { l.setStyle({ weight: 2.5, color: '#172023' }); } });
+                    l.on('mouseout', () => l.setStyle(this.gaya(d)));
+                    l.bindTooltip(textNode(`${d.nama}${d.kelas ? ' · risiko ' + d.kelas.toLowerCase() : ''}`), { sticky: true });
+                });
+                layer.addTo(groups.desa);
+                layerDesa[d.kode] = layer;
+            });
+            this.perbaruiGaya();
+            this.fokusBromo();
+            this.aturLapisan('desa');
+        },
+
+        gaya(d) {
+            const warna = WARNA_KELAS[d.kelas] || WARNA_NETRAL;
+            const terpilih = this.desaTerpilih?.kode === d.kode;
+            const redup = this.kelasAktif && d.kelas !== this.kelasAktif;
+            if (terpilih) { return { color: '#172023', weight: 3, fillColor: warna, fillOpacity: 0.72 }; }
+            if (redup) { return { color: '#9aa7a2', weight: 0.6, fillColor: '#9aa7a2', fillOpacity: 0.07 }; }
+            return { color: warna, weight: 1.4, fillColor: warna, fillOpacity: 0.42 };
+        },
+
+        perbaruiGaya() {
+            this.desa.forEach(d => {
+                const layer = layerDesa[d.kode]; if (!layer) { return; }
+                layer.setStyle(this.gaya(d));
+                if (this.desaTerpilih?.kode === d.kode) { layer.bringToFront(); }
+            });
+        },
+
+        saring(kelas) {
+            this.kelasAktif = this.kelasAktif === kelas ? null : kelas;
+            if (this.desaTerpilih && this.kelasAktif && this.desaTerpilih.kelas !== this.kelasAktif) { this.desaTerpilih = null; }
+            this.perbaruiGaya();
+            const sasaran = this.desa.filter(d => !this.kelasAktif || d.kelas === this.kelasAktif).map(d => layerDesa[d.kode]).filter(Boolean);
+            if (sasaran.length) { this.sesuaikan(L.featureGroup(sasaran).getBounds(), 13); }
+        },
+
+        pilihDesa(kode, geser = true) {
+            this.desaTerpilih = this.desa.find(d => d.kode === kode) || null;
+            this.perbaruiGaya();
+            if (geser && this.desaTerpilih && layerDesa[kode]) { this.sesuaikan(layerDesa[kode].getBounds(), 14); }
+            this.$nextTick(() => {
+                if (window.matchMedia('(max-width: 1050px)').matches) { this.$refs.rail?.scrollIntoView({ behavior: gerakDikurangi() ? 'auto' : 'smooth', block: 'start' }); }
+            });
+        },
+        tutupDetail() { this.desaTerpilih = null; this.perbaruiGaya(); },
+
+        sesuaikan(bounds, maksimum) {
+            if (!map || !bounds.isValid()) { return; }
+            if (gerakDikurangi()) { map.fitBounds(bounds, { padding: [40, 40], maxZoom: maksimum, animate: false }); }
+            else { map.flyToBounds(bounds, { padding: [40, 40], maxZoom: maksimum, duration: 0.8 }); }
+        },
+
+        persen(v) { return v === null || v === undefined ? 0 : Math.round(Math.max(0, Math.min(1, v)) * 100); },
+        skor2(v) { return v === null || v === undefined ? '—' : Number(v).toLocaleString('id-ID', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); },
+        warna(kelas) { return WARNA_KELAS[kelas] || WARNA_NETRAL; },
+        fakta(d) {
+            const a = d?.a || {};
+            return [
+                ['Suhu permukaan', a.Suhu_Permukaan_C, '°C'], ['Kemiringan lereng', a.Lereng_derajat, '°'],
+                ['Hujan 7 hari', a.Hujan_7_Hari_mm, 'mm'], ['NDMI sebelum', a.NDMI_sebelum, ''],
+                ['Perubahan NBR (dNBR)', a.dNBR, ''], ['Deteksi piksel VIIRS', a.Hotspot_Piksel, ''],
+            ];
+        },
+
         async muatDataset() {
             const request = ++requests;
-            this.memuat = true; this.kesalahan = '';
+            this.memuat = true; this.kesalahan = this.kesalahan || '';
             try {
                 const response = await fetch(datasetUrl, { headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(20000) });
                 if (!response.ok) { throw new Error('metadata'); }
                 const payload = await response.json();
-                if (!payload.data || !Array.isArray(payload.data)) {
-    throw new Error('Format API desa tidak valid');
-}
+                if (!payload.data || !Array.isArray(payload.data)) { throw new Error('Format API tidak valid'); }
                 const [boundaryResponse, areaResponse] = await Promise.all([fetch(payload.tautan.geojson, { signal: AbortSignal.timeout(30000) }), payload.tautan.wilayah ? fetch(payload.tautan.wilayah, { signal: AbortSignal.timeout(30000) }) : null]);
                 if (!boundaryResponse.ok || (areaResponse && !areaResponse.ok)) { throw new Error('boundary'); }
                 const boundary = await boundaryResponse.json();
                 const area = areaResponse ? await areaResponse.json() : null;
                 if (request !== requests) { return; }
-                const createLayer = (geojson, color, label) => L.geoJSON(geojson, { style: { color, weight: 1.5, fillColor: color, fillOpacity: 0.035 }, onEachFeature: (f, layer) => { layer.bindTooltip(textNode(f.properties?.nama || f.properties?.WADMKK || label)); } });
+                const buat = (geojson, color, label) => L.geoJSON(geojson, { style: { color, weight: 1.5, fillColor: color, fillOpacity: 0.035 }, interactive: false });
                 if (groups.administrasi) { groups.administrasi.remove(); }
-                groups.administrasi = createLayer(boundary, '#697d77', 'Batas administrasi lampiran');
+                groups.administrasi = buat(boundary, '#697d77', 'Batas administrasi lampiran');
                 this.aturLapisan('administrasi');
                 if (groups.wilayah) { groups.wilayah.remove(); }
                 this.wilayahTersedia = Boolean(area);
-                if (area) { groups.wilayah = createLayer(area, '#1b6c63', 'Wilayah analisis GEE'); this.aturLapisan('wilayah'); }
+                if (area) { groups.wilayah = buat(area, '#1b6c63', 'Wilayah analisis GEE'); this.aturLapisan('wilayah'); }
                 this.analisis = payload.analisis?.baris || [];
                 if (groups.kejadian) { groups.kejadian.remove(); }
                 groups.kejadian = L.featureGroup().addTo(map);
-                this.analisis.forEach(r => L.circleMarker([r.Latitude, r.Longitude], { radius: 8, color: '#a93632', fillColor: '#a93632', fillOpacity: 0.8 }).bindTooltip(textNode(`${r.Lokasi} · referensi historis ${r.Tanggal_Kebakaran}`)).addTo(groups.kejadian));
+                this.analisis.forEach(r => L.circleMarker([r.Latitude, r.Longitude], { radius: 8, color: '#172023', weight: 2, fillColor: '#c43d22', fillOpacity: 0.9 }).bindTooltip(textNode(`${r.Lokasi} · referensi historis ${r.Tanggal_Kebakaran}`)).addTo(groups.kejadian));
             } catch (error) {
                 if (request === requests) { this.kesalahan = 'Dataset gagal dimuat. Periksa koneksi lalu coba lagi.'; }
             } finally { if (request === requests) { this.memuat = false; } }
         },
 
-        async muatDesa() {
-    try {
-        const response = await fetch('/api/v1/zones', {
-            headers: { Accept: 'application/json' }
-        });
-
-        if (!response.ok) {
-            throw new Error('API desa gagal');
-        }
-
-        const payload = await response.json();
-
-        if (layerDesa) {
-            layerDesa.remove();
-        }
-
-        layerDesa = L.geoJSON({
-            type: 'FeatureCollection',
-            features: payload.data.map(z => ({
-                type: 'Feature',
-                geometry: z.poligon_geojson,
-                properties: {
-                nama: z.nama,
-                kode: z.kode,
-                analisis: z.data_analisis,
-                kelas: z.kelas || z.data_analisis?.Kelas
-            }
-            }))
-        }, {
-            style: feature => {
-                const kelas = feature.properties.kelas;
-
-                const warna = {
-                    'Rendah': '#22c55e',
-                    'Sedang': '#eab308',
-                    'Tinggi': '#ef4444'
-                };
-
-                return {
-                    color: warna[kelas] || '#64748b',
-                    weight: 1.5,
-                    fillColor: warna[kelas] || '#64748b',
-                    fillOpacity: 0.35
-                };
-            },
-
-            onEachFeature: (feature, layer) => {
-                const p = feature.properties;
-                const a = p.analisis || {};
-
-                const popup = document.createElement('div');
-
-                const judul = document.createElement('strong');
-                judul.textContent = p.nama;
-                popup.appendChild(judul);
-
-                const informasi = [
-                    ['Kelas risiko', p.kelas],
-                    ['Skor gabungan', a.Skor_Gabungan],
-                    ['NDVI sebelum', a.NDVI_sebelum],
-                    ['NDVI sesudah', a.NDVI_sesudah],
-                    ['NDMI sebelum', a.NDMI_sebelum],
-                    ['NDMI sesudah', a.NDMI_sesudah],
-                    ['NBR sebelum', a.NBR_sebelum],
-                    ['NBR sesudah', a.NBR_sesudah],
-                    ['dNBR', a.dNBR],
-                    ['Suhu permukaan', a.Suhu_Permukaan_C],
-                    ['Lereng', a.Lereng_derajat],
-                    ['Hujan 7 hari', a.Hujan_7_Hari_mm],
-                    ['Hotspot piksel', a.Hotspot_Piksel]
-                ];
-
-                informasi.forEach(([label, nilai]) => {
-                    const baris = document.createElement('div');
-                    baris.textContent =
-                        `${label}: ${nilai ?? '—'}`;
-                    popup.appendChild(baris);
-                });
-
-                layer.bindPopup(popup);
-                layer.bindTooltip(p.nama);
-            }
-        });
-
-        groups.desa.addLayer(layerDesa);
-        this.desaSiap = true;
-        console.log('Polygon desa berhasil dimuat:', payload.data.length);
-
-    } catch (error) {
-        console.error('Gagal memuat polygon desa:', error);
-        this.kesalahan = 'Polygon desa gagal dimuat dari API.';
-    }
-},
-
-
-async lokasiSaya() {
-    if (!navigator.geolocation) {
-        this.kesalahan = 'Browser tidak mendukung GPS.';
-        return;
-    }
-
-    if (!this.desaSiap) {
-    this.kesalahan = 'Polygon desa belum selesai dimuat.';
-    return;
-}
-
-    this.memuatLokasi = true;
-    this.kesalahan = '';
-
-    navigator.geolocation.getCurrentPosition(
-        (posisi) => {
-            const lat = posisi.coords.latitude;
-            const lng = posisi.coords.longitude;
-
-            this.lokasiPengguna = { lat, lng };
-
-            // Buat atau pindahkan marker GPS
-            if (markerLokasiPengguna) {
-                markerLokasiPengguna.setLatLng([lat, lng]);
-            } else {
-                markerLokasiPengguna = L.circleMarker(
-                    [lat, lng],
-                    {
-                        radius: 9,
-                        color: '#ffffff',
-                        weight: 3,
-                        fillColor: '#2563eb',
-                        fillOpacity: 1
+        lokasiSaya() {
+            if (!navigator.geolocation) { this.kesalahan = 'Browser tidak mendukung GPS.'; return; }
+            if (!Object.keys(layerDesa).length) { this.kesalahan = 'Poligon desa belum selesai dimuat.'; return; }
+            this.memuatLokasi = true; this.kesalahan = '';
+            navigator.geolocation.getCurrentPosition(
+                (posisi) => {
+                    const lat = posisi.coords.latitude; const lng = posisi.coords.longitude;
+                    this.lokasiPengguna = { lat, lng };
+                    if (markerLokasiPengguna) { markerLokasiPengguna.setLatLng([lat, lng]); }
+                    else {
+                        markerLokasiPengguna = L.circleMarker([lat, lng], { radius: 9, color: '#ffffff', weight: 3, fillColor: '#2563eb', fillOpacity: 1 }).addTo(map);
+                        markerLokasiPengguna.bindTooltip('Lokasi Anda');
                     }
-                ).addTo(map);
-
-                markerLokasiPengguna.bindTooltip('Lokasi Anda');
-            }
-
-            // Pindahkan peta ke lokasi pengguna
-            map.setView([lat, lng], 14);
-
-            // Cari desa tempat pengguna berada
-            this.desaPengguna = null;
-
-            if (layerDesa) {
-                layerDesa.eachLayer(layer => {
-                    const geometry = layer.feature.geometry;
-
-                    if (titikDalamGeoJSON([lng, lat], geometry)) {
-                        this.desaPengguna = layer.feature.properties;
-                    }
-                });
-            }
-
-            this.memuatLokasi = false;
+                    const ditemukan = this.desa.find(d => d.geometri && titikDalamGeoJSON([lng, lat], d.geometri)) || null;
+                    this.desaPengguna = ditemukan; this.luarWilayah = !ditemukan;
+                    if (ditemukan) { this.pilihDesa(ditemukan.kode); } else { map.setView([lat, lng], 13); }
+                    this.memuatLokasi = false;
+                },
+                (error) => {
+                    this.memuatLokasi = false;
+                    this.kesalahan = { 1: 'Izin lokasi ditolak. Aktifkan izin lokasi di pengaturan browser.', 2: 'Lokasi tidak tersedia. Coba pindah ke area terbuka.', 3: 'Permintaan lokasi melewati batas waktu. Coba lagi.' }[error.code] || 'Gagal mendapatkan lokasi.';
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
         },
-        (error) => {
-            this.memuatLokasi = false;
-
-            const pesan = {
-                1: 'Izin lokasi ditolak.',
-                2: 'Lokasi tidak tersedia.',
-                3: 'Permintaan lokasi timeout.'
-            };
-
-            this.kesalahan = pesan[error.code] || 'Gagal mendapatkan lokasi.';
-        },
-        {
-            enableHighAccuracy: true,
-            timeout: 15000,
-            maximumAge: 0
-        }
-    );
-},
-
 
         aturLapisan(nama) { const layer = groups[nama]; if (layer && map) { if (this.lapisan[nama]) { layer.addTo(map); } else { layer.remove(); } } },
         gantiPeta(nama) { if (!map || !bases[nama]) { return; } Object.values(bases).forEach(l => l.remove()); this.petaDasar = nama; bases[nama].addTo(map); },
-        fokusBromo() { if (groups.wilayah && groups.wilayah.getBounds().isValid()) { map.fitBounds(groups.wilayah.getBounds(), { padding: [24, 24], maxZoom: 12 }); } else if (groups.zona?.getBounds().isValid()) { map.fitBounds(groups.zona.getBounds(), { padding: [38, 38], maxZoom: 12 }); } else { map.setView([-7.95, 112.95], 11); } },
-        pilihZona(kode, geser = true) { this.terpilih = this.zonas.find(z => z.kode === kode) || null; Object.entries(markers).forEach(([key, marker]) => marker.setStyle({ radius: key === kode ? 10 : 7, fillColor: key === kode ? '#132b27' : '#1b6c63' })); if (geser && this.terpilih) { map.setView([this.terpilih.titik_tengah_lat, this.terpilih.titik_tengah_lng], 13); } },
+        fokusBromo() { const b = groups.desa?.getBounds(); if (b && b.isValid()) { this.sesuaikan(b, 12); } else { map?.setView([-7.95, 112.95], 11); } },
         formatAngka(value) { return value === null || value === undefined ? '—' : Number(value).toLocaleString('id-ID', { maximumFractionDigits: 3 }); },
         destroy() { requests++; map?.remove(); },
     };
