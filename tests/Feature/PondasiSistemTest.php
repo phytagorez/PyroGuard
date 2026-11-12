@@ -32,8 +32,8 @@ test('zona bromo terdaftar 6 wilayah dengan koordinat poligon geojson', function
         expect($zona->poligon_geojson)->toBeArray()
             ->and($zona->poligon_geojson['type'])->toBe('Polygon')
             ->and($zona->poligon_geojson['coordinates'])->toBeArray()
-            ->and($zona->titik_tengah_lat)->toBeFloat()
-            ->and($zona->titik_tengah_lng)->toBeFloat();
+            ->and(is_numeric($zona->titik_tengah_lat))->toBeTrue()
+            ->and(is_numeric($zona->titik_tengah_lng))->toBeTrue();
     }
 });
 

@@ -17,8 +17,8 @@ class PantauanController extends Controller
      */
     public function __invoke(LayananCuacaOpenMeteo $layananCuaca): View
     {
-        // 1. Ambil 6 zona pemantauan beserta relasi lengkap
-        $zonas = Zona::with([
+        // 1. Ambil 30 desa hasil analisis satelit (zona BRM lama tidak ditampilkan)
+        $zonas = Zona::desa()->with([
             'risikoTerbaru',
             'siagaAktif',
             'sumberAir',

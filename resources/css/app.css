@@ -592,3 +592,30 @@ body.app-shell { background: var(--frame); }
 }
 @media (prefers-reduced-motion: reduce) { .class-tile:hover { transform: none; } .meter > i { transition: none; } }
 html.mode-terang-tinggi .class-tile, html.mode-terang-tinggi .desa-rail, html.mode-terang-tinggi .map-workbench { border: 2px solid #182824; }
+
+/* ---- Cek lokasi & arahan keselamatan ---- */
+.locate-hero { margin: 22px 0 8px; padding: 18px 20px; background: #fff; border: 1.5px solid var(--control, #cfd8d3); border-radius: 14px; }
+.locate-hero-main { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+.locate-hero h2 { font-size: 18px; font-weight: 600; letter-spacing: -.3px; }
+.locate-hero p { font-size: 13px; color: var(--ink-muted); margin-top: 5px; max-width: 62ch; line-height: 1.55; }
+.locate-hero-button { flex-shrink: 0; }
+.locate-hero-error { color: var(--danger); margin-top: 12px !important; font-weight: 500; }
+.locate-result { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+.locate-result-body { border-left: 5px solid #7b8a86; padding-left: 14px; }
+.locate-result-body.is-tinggi { border-color: var(--r-tinggi, #c43d22); }
+.locate-result-body.is-sedang { border-color: var(--r-sedang, #dd9f17); }
+.locate-result-body.is-rendah { border-color: var(--r-rendah, #3f8f68); }
+.locate-result-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }
+.locate-result strong { display: block; font-size: 20px; letter-spacing: -.4px; }
+.locate-advice-title { font-weight: 600; color: var(--ink) !important; margin-top: 12px !important; }
+.locate-advice { margin: 8px 0 0 18px; list-style: disc; font-size: 13px; line-height: 1.6; }
+.locate-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.detail-block { margin: 16px 0; padding-top: 14px; border-top: 1px solid var(--line); }
+.detail-block h3, .detail-subhead { font-size: 13px; font-weight: 600; margin-bottom: 6px; }
+.detail-subhead { margin-top: 18px; }
+.detail-lead { font-size: 13px; line-height: 1.6; color: var(--ink); }
+.cause-list { display: grid; gap: 10px; }
+.cause-list li { display: grid; gap: 2px; font-size: 13px; line-height: 1.5; }
+.cause-list span { color: var(--ink-muted); }
+.cause-list small { font-size: 11px; color: var(--ink-muted); }
+@media (max-width: 720px) { .locate-hero-main { flex-direction: column; align-items: stretch; } .locate-hero-button { width: 100%; } .locate-actions > * { flex: 1 1 100%; } }

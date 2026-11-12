@@ -9,26 +9,19 @@ beforeEach(function () {
     $this->seed(DatabaseSeeder::class);
 });
 
-test('halaman pantauan memisahkan batas administrasi, referensi zona, dan data historis', function () {
+test('halaman peta risiko hanya memuat desa hasil analisis dan fitur cek lokasi', function () {
+    $this->artisan('app:import-dataset-desa')->assertSuccessful();
+
     $response = $this->get('/');
 
     $response->assertOk()
-        ->assertSee('Pyro')
-        ->assertSee('Guard')
-        ->assertSee('Bromo')
         ->assertSee('id="petaPantauan"', false)
-        ->assertSee('Batas administrasi')
-        ->assertSee('Wilayah analisis GEE')
-        ->assertSee('Referensi zona')
-        ->assertSee('Logistik')
-        ->assertSee('bukan batas wilayah')
-        ->assertSee('Lapor asap')
-        ->assertSee('BRM-01')
-        ->assertSee('BRM-02')
-        ->assertSee('BRM-03')
-        ->assertSee('BRM-04')
-        ->assertSee('BRM-05')
-        ->assertSee('BRM-06');
+        ->assertSee('Cek lokasi saya')
+        ->assertSee('Peta risiko desa')
+        ->assertSee('Lapor asap');
+
+    // 30 desa dikirim ke peta; zona BRM lama tidak ikut.
+    expect(App\Models\Zona::desa()->count())->toBe(30);
 });
 
 test('halaman jalur evakuasi (/evakuasi) memuat peta, sumber air, arah angin, dan emergency bar', function () {

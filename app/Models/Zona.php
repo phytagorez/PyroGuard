@@ -57,6 +57,98 @@ protected function casts(): array
 
 
     /**
+     * Hanya desa hasil analisis satelit (punya data_analisis).
+     * Zona BRM lama tidak ikut tampil di peta dan pelaporan publik.
+     */
+    public function scopeDesa($query)
+    {
+        return $query->whereNotNull('data_analisis');
+    }
+
+    /**
+     * Kelas risiko desa (Tinggi/Sedang/Rendah) dari analisis satelit.
+     */
+    public function getKelasRisikoAttribute(): ?string
+    {
+        $kelas = $this->data_analisis['Kelas'] ?? null;
+
+        return in_array($kelas, ['Tinggi', 'Sedang', 'Rendah'], true) ? $kelas : null;
+    }
+
+    /**
+     * Cari desa yang memuat koordinat. Bila titik berada di luar semua poligon
+     * (mis. GPS meleset di batas desa), pakai desa dengan titik tengah terdekat.
+     */
+    public static function cariDesaDi(float $lat, float $lng): ?self
+    {
+        $desas = static::desa()->get();
+
+        foreach ($desas as $desa) {
+            if (self::titikDalamGeometri([$lng, $lat], $desa->poligon_geojson)) {
+                return $desa;
+            }
+        }
+
+        return $desas->sortBy(function (self $desa) use ($lat, $lng) {
+            return (($desa->titik_tengah_lat - $lat) ** 2) + (($desa->titik_tengah_lng - $lng) ** 2);
+        })->first();
+    }
+
+    /**
+     * Uji titik-dalam-poligon (ray casting) untuk Polygon dan MultiPolygon GeoJSON.
+     *
+     * @param  array{0: float, 1: float}  $titik  [lng, lat]
+     */
+    public static function titikDalamGeometri(array $titik, ?array $geometri): bool
+    {
+        if (! $geometri || empty($geometri['coordinates'])) {
+            return false;
+        }
+
+        $polygons = ($geometri['type'] ?? '') === 'MultiPolygon'
+            ? $geometri['coordinates']
+            : [$geometri['coordinates']];
+
+        foreach ($polygons as $polygon) {
+            if (! self::titikDalamRing($titik, $polygon[0] ?? [])) {
+                continue;
+            }
+
+            $dalamLubang = false;
+            foreach (array_slice($polygon, 1) as $lubang) {
+                if (self::titikDalamRing($titik, $lubang)) {
+                    $dalamLubang = true;
+                    break;
+                }
+            }
+
+            if (! $dalamLubang) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    protected static function titikDalamRing(array $titik, array $ring): bool
+    {
+        [$x, $y] = $titik;
+        $dalam = false;
+        $n = count($ring);
+
+        for ($i = 0, $j = $n - 1; $i < $n; $j = $i++) {
+            [$xi, $yi] = $ring[$i];
+            [$xj, $yj] = $ring[$j];
+
+            if ((($yi > $y) !== ($yj > $y)) && ($x < ($xj - $xi) * ($y - $yi) / ($yj - $yi) + $xi)) {
+                $dalam = ! $dalam;
+            }
+        }
+
+        return $dalam;
+    }
+
+    /**
      * Relasi riwayat cuaca harian zona.
      */
     public function cuacaHarian(): HasMany

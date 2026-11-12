@@ -1,10 +1,10 @@
 @php
     $menuPublik = [
-        ['pantauan', 'Pantauan peta', '01'],
-        ['evakuasi', 'Logistik & akses', '02'],
+        ['pantauan', 'Peta risiko desa', '01'],
+        ['evakuasi', 'Air & evakuasi', '02'],
         ['lapor.index', 'Lapor asap', '03'],
-        ['notifikasi', 'Kanal peringatan', '04'],
-        ['metode', 'Metode & dataset', '05'],
+        ['notifikasi', 'Terima peringatan', '04'],
+        ['metode', 'Metode & sumber data', '05'],
     ];
     $menuAdmin = [
         ['admin.tinjauan', 'Tinjauan risiko', '01'],

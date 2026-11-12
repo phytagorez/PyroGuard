@@ -17,7 +17,7 @@ class LaporanAsapController extends Controller
      */
     public function create(Request $request, LayananLaporan $layananLaporan): View
     {
-        $zonas = Zona::select('id', 'kode', 'nama', 'titik_tengah_lat', 'titik_tengah_lng', 'poligon_geojson')->get();
+        $zonas = Zona::desa()->select('id', 'kode', 'nama', 'titik_tengah_lat', 'titik_tengah_lng', 'poligon_geojson', 'data_analisis')->orderBy('nama')->get();
 
         $batasLaju = $layananLaporan->hitungSisaBatasLaju(
             auth()->id(),

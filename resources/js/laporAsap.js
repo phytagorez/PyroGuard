@@ -1,3 +1,17 @@
+function dalamRing(lng, lat, ring) {
+    let dalam = false;
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+        const [xi, yi] = ring[i]; const [xj, yj] = ring[j];
+        if ((yi > lat) !== (yj > lat) && lng < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) dalam = !dalam;
+    }
+    return dalam;
+}
+function dalamGeometri(lng, lat, g) {
+    if (!g || !g.coordinates) return false;
+    const polys = g.type === 'MultiPolygon' ? g.coordinates : [g.coordinates];
+    return polys.some(poly => dalamRing(lng, lat, poly[0]) && !poly.slice(1).some(h => dalamRing(lng, lat, h)));
+}
+
 export default function laporAsap(config) {
     let mapInstance;
     let markerInstance;
@@ -138,23 +152,19 @@ export default function laporAsap(config) {
         },
 
         hitungZonaTerdekat() {
-            let jarakMin = Infinity;
-            let terpilih = this.zonas[0];
-
-            this.zonas.forEach(z => {
-                const dLat = z.titik_tengah_lat - this.lat;
-                const dLng = z.titik_tengah_lng - this.lng;
-                const d = (dLat * dLat) + (dLng * dLng);
-                if (d < jarakMin) {
-                    jarakMin = d;
-                    terpilih = z;
-                }
-            });
-
+            // Utamakan desa yang poligonnya memuat titik; cadangan: titik tengah terdekat.
+            let terpilih = this.zonas.find(z => dalamGeometri(this.lng, this.lat, z.poligon_geojson));
+            if (!terpilih) {
+                let jarakMin = Infinity;
+                this.zonas.forEach(z => {
+                    const d = ((z.titik_tengah_lat - this.lat) ** 2) + ((z.titik_tengah_lng - this.lng) ** 2);
+                    if (d < jarakMin) { jarakMin = d; terpilih = z; }
+                });
+            }
             if (!terpilih) { return; }
             this.zonaId = terpilih.id;
             this.zonaKode = terpilih.kode;
-            this.lokasiNama = terpilih.nama;
+            this.lokasiNama = terpilih.data_analisis?.Label || terpilih.nama;
         },
 
         handleFoto(event) {

@@ -6,6 +6,7 @@ use App\Models\LaporanAsap;
 use App\Models\Zona;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
@@ -44,7 +45,7 @@ class LayananLaporan
         $pathFoto2 = $this->simpanFoto($data['foto_2'] ?? null);
 
         // 5. Simpan laporan ke database
-        return LaporanAsap::create([
+        $laporan = LaporanAsap::create([
             'nomor_tiket' => $nomorTiket,
             'zona_id' => $zonaId,
             'pelapor_id' => $pelaporId,
@@ -60,6 +61,16 @@ class LayananLaporan
             'hasil_verifikasi' => null,
             'sumber' => $data['sumber'] ?? 'aktual',
         ]);
+
+        // 6. Kabari petugas lewat Telegram. Kegagalan Telegram tidak boleh
+        //    menggagalkan laporan warga, jadi dibungkus try/catch.
+        try {
+            app(LayananBotTelegram::class)->kirimPeringatanLaporanBaru($laporan->load('zona'));
+        } catch (\Throwable $e) {
+            Log::warning('Peringatan Telegram laporan baru gagal: '.$e->getMessage());
+        }
+
+        return $laporan;
     }
 
     /**
@@ -178,6 +189,13 @@ class LayananLaporan
      */
     public function tentukanZonaTerdekat(float $lat, float $lng): int
     {
+        // Utamakan desa yang poligonnya memuat titik laporan (analisis 30 desa).
+        $desa = Zona::cariDesaDi($lat, $lng);
+        if ($desa) {
+            return $desa->id;
+        }
+
+        // Cadangan: zona terdekat bila data desa belum diimpor.
         $zonas = Zona::all();
         $zonaTerpilih = $zonas->first();
         $jarakTerkecil = PHP_FLOAT_MAX;

@@ -36,7 +36,7 @@
             <div class="workspace-label"><span class="workspace-symbol">B</span><div>Kawasan Bromo<small>{{ $areaAdmin ? 'Administrasi & koordinasi' : 'Pemantauan kebakaran lahan' }}</small></div></div>
             @include('komponen.navigasi', ['areaAdmin' => $areaAdmin])
             <div class="sidebar-bottom">
-                <a href="{{ route('demo') }}" class="sidebar-demo"><span>Ruang simulasi</span><span aria-hidden="true">↗</span><small>Uji skenario tanpa mengubah observasi.</small></a>
+                <a href="{{ route('demo') }}" class="sidebar-demo"><span>Mode demo</span><span aria-hidden="true">↗</span><small>Uji skenario tanpa mengubah observasi.</small></a>
                 <div class="sidebar-footnote">PyroGuard / Bromo<br>Data untuk kesiapsiagaan kawasan</div>
             </div>
         </aside>
@@ -56,8 +56,8 @@
         </main>
     </div>
     <nav class="mobile-bottom" aria-label="Navigasi cepat">
-        <a href="{{ route('pantauan') }}" @if(request()->routeIs('pantauan')) aria-current="page" @endif>Peta</a>
-        <a href="{{ route('evakuasi') }}" @if(request()->routeIs('evakuasi')) aria-current="page" @endif>Logistik</a>
+        <a href="{{ route('pantauan') }}" @if(request()->routeIs('pantauan')) aria-current="page" @endif>Peta risiko</a>
+        <a href="{{ route('evakuasi') }}" @if(request()->routeIs('evakuasi')) aria-current="page" @endif>Air & evakuasi</a>
         <a href="{{ route('lapor.index') }}" @if(request()->routeIs('lapor.*')) aria-current="page" @endif>Lapor asap</a>
         <button type="button" @click="menuBuka = !menuBuka" :aria-expanded="menuBuka" aria-controls="navigasi-aplikasi">Menu</button>
     </nav>

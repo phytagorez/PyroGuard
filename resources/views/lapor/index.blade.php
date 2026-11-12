@@ -8,7 +8,7 @@
 @endphp
 
 <div
-    x-data="laporAsap({{ Js::from(['sukses' => (bool) $suksesTiket, 'tiket' => $suksesTiket, 'zonas' => $zonas, 'lat' => $zonaPilihan?->titik_tengah_lat ?? -7.965, 'lng' => $zonaPilihan?->titik_tengah_lng ?? 112.968, 'lokasiNama' => $zonaPilihan?->nama ?? 'Savana & Jemplang', 'zonaId' => $zonaPilihan?->id, 'zonaKode' => $zonaPilihan?->kode ?? '', 'sisaKuota' => $batasLaju['sisa_kuota'] ?? 3, 'terkunci' => (bool) ($batasLaju['terkunci'] ?? false), 'detikTunggu' => $batasLaju['detik_tunggu'] ?? 0]) }})"
+    x-data="laporAsap({{ Js::from(['sukses' => (bool) $suksesTiket, 'tiket' => $suksesTiket, 'zonas' => $zonas, 'lat' => $zonaPilihan?->titik_tengah_lat ?? -7.965, 'lng' => $zonaPilihan?->titik_tengah_lng ?? 112.968, 'lokasiNama' => $zonaPilihan?->nama ?? 'Menentukan desa…', 'zonaId' => $zonaPilihan?->id, 'zonaKode' => $zonaPilihan?->kode ?? '', 'sisaKuota' => $batasLaju['sisa_kuota'] ?? 3, 'terkunci' => (bool) ($batasLaju['terkunci'] ?? false), 'detikTunggu' => $batasLaju['detik_tunggu'] ?? 0]) }})"
     class="report-workspace space-y-6"
 >
     {{-- TAMPILAN 1: TICKET SUCCESS (§6.8 & §7.3) --}}

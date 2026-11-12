@@ -52,13 +52,13 @@ class LayananBotTelegram
                 .'Hari ke-'.($params['cdd'] ?? 11).' tanpa hujan. FDI '.($params['fdi'] ?? 62).'/100, angin '.($params['angin'] ?? 19)." km/j.\n"
                 ."Jangan membakar sampah. Padamkan puntung rokok.\n"
                 ."Jangan menyalakan flare atau api terbuka.\n"
-                ."Darurat: 112 · Pantau: pyrog.uard/{$kodeUrl}",
+                ."Darurat: 112 · Pantau: {$this->urlPortal()}",
 
             'siaga_1' => $prefix."SIAGA 1 — {$zona->nama} ({$zona->kode})\n"
                 .'Hari ke-'.($params['cdd'] ?? 19).' tanpa hujan. FDI '.($params['fdi'] ?? 86).'/100. Angin '.($params['angin'] ?? 28)." km/j.\n"
                 ."Dilarang keras membuat api terbuka sampai status dicabut.\n"
                 ."Siapkan masker dan ketahui jalur keluar.\n"
-                ."Darurat: 112 · Info: pyrog.uard/{$kodeUrl}",
+                ."Darurat: 112 · Info: {$this->urlPortal()}",
 
             'titik_api' => $prefix.'Asap terverifikasi '.($params['jarak'] ?? '1,8').' km arah '.($params['arah'] ?? 'barat daya').".\n"
                 .'Regu menuju lokasi. Angin ke '.($params['arah_angin'] ?? 'barat laut').".\n"
@@ -67,10 +67,71 @@ class LayananBotTelegram
             'pencabutan' => $prefix."SIAGA 1 DICABUT — {$zona->nama}\n"
                 .'FDI turun ke '.($params['fdi'] ?? 41)."/100 setelah hujan.\n"
                 ."Tetap jaga kebersihan lahan dan jangan membakar.\n"
-                .'Darurat: 112 · Pantau: pyrog.uard',
+                .'Darurat: 112 · Pantau: '.$this->urlPortal(),
 
             default => $prefix."PEMBERITAHUAN — {$zona->nama} ({$zona->kode})\n".($params['catatan'] ?? 'Pantau informasi berkala melalui portal PyroGuard.'),
         };
+    }
+
+    /**
+     * Peringatan ke grup petugas saat warga mengirim laporan asap baru.
+     * Berisi desa, kelas risiko, koordinat, tautan peta, dan tombol aksi petugas.
+     *
+     * @return array{success: bool, simulasi: bool, data: mixed}
+     */
+    public function kirimPeringatanLaporanBaru(LaporanAsap $laporan): array
+    {
+        $zona = $laporan->zona;
+        $e = fn ($teks) => htmlspecialchars((string) $teks, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        $jenis = [
+            'asap_tipis' => 'Asap tipis',
+            'asap_tebal' => 'Asap tebal',
+            'api_terlihat' => 'Api terlihat',
+            'bekas_terbakar' => 'Bekas terbakar',
+        ][$laporan->jenis_temuan] ?? $laporan->jenis_temuan;
+
+        $kelas = $zona?->kelas_risiko;
+        $ikon = match ($kelas) {
+            'Tinggi' => '🔴',
+            'Sedang' => '🟡',
+            'Rendah' => '🟢',
+            default => '⚪',
+        };
+        $lokasi = $zona
+            ? $e($zona->data_analisis['Label'] ?? $zona->nama)
+            : 'Lokasi belum terpetakan';
+        $peta = 'https://www.google.com/maps?q='.$laporan->latitude.','.$laporan->longitude;
+
+        $pesan = "🚨 <b>LAPORAN ASAP BARU {$e($laporan->nomor_tiket)}</b>\n"
+            ."Temuan: <b>{$e($jenis)}</b>\n"
+            ."Desa: <b>{$lokasi}</b>".($kelas ? " ({$ikon} risiko ".strtolower($kelas).')' : '')."\n"
+            ."Koordinat: {$laporan->latitude}, {$laporan->longitude}\n"
+            .'Peta: '.$peta."\n"
+            .($laporan->catatan ? "Catatan: {$e($laporan->catatan)}\n" : '')
+            ."\nMohon verifikasi lapangan secepatnya.";
+
+        $tombol = ['inline_keyboard' => [[
+            ['text' => '🚒 Menuju lokasi', 'callback_data' => "tiket:menuju:{$laporan->nomor_tiket}"],
+            ['text' => '🔥 Api nyata', 'callback_data' => "tiket:api_nyata:{$laporan->nomor_tiket}"],
+            ['text' => '✖ Bukan api', 'callback_data' => "tiket:bukan_api:{$laporan->nomor_tiket}"],
+        ]]];
+
+        if (empty($this->officerGroupId)) {
+            Log::info('[Telegram] TELEGRAM_OFFICER_GROUP_ID kosong, peringatan laporan hanya dicatat: '.$pesan);
+
+            return ['success' => false, 'simulasi' => true, 'data' => 'Grup petugas belum diatur di .env'];
+        }
+
+        return $this->kirimPesan((string) $this->officerGroupId, $pesan, $tombol);
+    }
+
+    /**
+     * Alamat portal untuk tautan di pesan (dari APP_URL, bukan teks tetap).
+     */
+    protected function urlPortal(): string
+    {
+        return rtrim((string) config('app.url'), '/');
     }
 
     /**
@@ -201,10 +262,10 @@ class LayananBotTelegram
             $balasan = "🌲 <b>Selamat datang di Bot PyroGuard Bromo</b>\n\n"
                 ."Sistem Peringatan Dini Kebakaran Lahan Kawasan Bromo Tengger Semeru.\n\n"
                 ."Perintah tersedia:\n"
-                ."• /status — Ringkasan kondisi kawasan saat ini\n"
-                ."• /zona — Daftar status 6 zona pemantauan\n"
+                ."• /status — Ringkasan risiko kawasan saat ini\n"
+                ."• /zona — Daftar risiko 30 desa di kawasan Bromo\n"
                 ."• /berhenti — Berhenti menerima notifikasi\n\n"
-                .'Buka portal lengkap: https://pyrog.uard';
+                .'Buka portal lengkap: '.$this->urlPortal();
 
             $this->kirimPesan($chatId, $balasan);
 
@@ -213,37 +274,46 @@ class LayananBotTelegram
 
         // Perintah /status
         if ($text === '/status') {
-            $zonas = Zona::with('risikoTerbaru')->get();
-            $zonaTertinggi = $zonas->sortByDesc(fn ($z) => $z->risikoTerbaru?->indeks_bahaya_api ?? 0)->first();
-            $r = $zonaTertinggi?->risikoTerbaru;
+            $desas = Zona::desa()->get();
 
-            $statusText = "📊 <b>STATUS KAWASAN BROMO HARI INI</b>\n"
-                ."Zona Tertinggi: <b>{$zonaTertinggi?->nama}</b>\n"
-                ."Status: <b>{$r?->kategori_risiko}</b> (FDI {$r?->indeks_bahaya_api}/100)\n"
-                ."Hari Tanpa Hujan: <b>{$r?->hari_tanpa_hujan} hari</b>\n"
-                ."Angin: {$r?->kecepatan_angin_kmj} km/j dari {$r?->arah_angin}\n\n"
-                ."⚠️ <i>Dilarang membuat api terbuka di kawasan savana.</i>\n"
-                .'Darurat: 112 · Info: https://pyrog.uard';
+            if ($desas->isNotEmpty()) {
+                $hitung = $desas->countBy(fn ($z) => $z->kelas_risiko ?? 'Belum ada');
+                $teratas = $desas->sortByDesc(fn ($z) => $z->data_analisis['Skor_Gabungan'] ?? 0)->take(3);
+
+                $statusText = "📊 <b>STATUS RISIKO KEBAKARAN KAWASAN BROMO</b>\n"
+                    ."🔴 Tinggi: <b>".($hitung['Tinggi'] ?? 0)." desa</b> · 🟡 Sedang: <b>".($hitung['Sedang'] ?? 0)." desa</b> · 🟢 Rendah: <b>".($hitung['Rendah'] ?? 0)." desa</b>\n\n"
+                    ."Desa yang perlu paling diwaspadai:\n";
+
+                foreach ($teratas as $z) {
+                    $label = htmlspecialchars($z->data_analisis['Label'] ?? $z->nama, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                    $statusText .= "• {$label} — risiko ".strtolower($z->kelas_risiko ?? 'belum diketahui')."\n";
+                }
+
+                $statusText .= "\n⚠️ <i>Dilarang membuat api unggun, membakar sampah, atau membuang puntung rokok sembarangan.</i>\n"
+                    .'Darurat: 112 · Peta lengkap: '.$this->urlPortal();
+            } else {
+                $statusText = "📊 Data risiko desa belum tersedia.\nDarurat: 112 · Info: ".$this->urlPortal();
+            }
 
             $this->kirimPesan($chatId, $statusText);
 
             return ['status' => 'status_sent'];
         }
 
-        // Perintah /zona
+        // Perintah /zona (daftar desa menurut kelas risiko)
         if ($text === '/zona') {
-            $zonas = Zona::with('risikoTerbaru')->get();
-            $msg = "🗺️ <b>6 ZONA PEMANTAUAN BROMO</b>\n\n";
+            $desas = Zona::desa()->get()->sortByDesc(fn ($z) => $z->data_analisis['Skor_Gabungan'] ?? 0);
+            $msg = "🗺️ <b>RISIKO KEBAKARAN PER DESA</b>\n\n";
 
-            foreach ($zonas as $z) {
-                $kat = $z->risikoTerbaru?->kategori_risiko ?? 'AMAN';
-                $cdd = $z->risikoTerbaru?->hari_tanpa_hujan ?? 0;
-                $icon = match ($kat) {
-                    'BAHAYA', 'SIAGA_1' => '🔴',
-                    'WASPADA' => '🟡',
-                    default => '🟢',
+            foreach ($desas as $z) {
+                $icon = match ($z->kelas_risiko) {
+                    'Tinggi' => '🔴',
+                    'Sedang' => '🟡',
+                    'Rendah' => '🟢',
+                    default => '⚪',
                 };
-                $msg .= "{$icon} <b>{$z->kode}</b> · {$z->nama}\n   Status: {$kat} ({$cdd} hari kering)\n\n";
+                $label = htmlspecialchars($z->data_analisis['Label'] ?? $z->nama, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $msg .= "{$icon} {$label}\n";
             }
 
             $this->kirimPesan($chatId, $msg);

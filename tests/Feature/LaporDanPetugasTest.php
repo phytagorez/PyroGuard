@@ -215,3 +215,29 @@ test('google oauth redirect memberikan peringatan ramah saat kredensial env belu
     $response->assertRedirect(route('masuk'))
         ->assertSessionHas('peringatan_google');
 });
+
+test('laporan baru ditempelkan ke desa yang memuat titik dan memicu pesan Telegram ke petugas', function () {
+    $this->seed(Database\Seeders\DatabaseSeeder::class);
+    $this->artisan('app:import-dataset-desa')->assertSuccessful();
+
+    config(['services.telegram.bot_token' => 'token-uji', 'services.telegram.officer_group_id' => '-100123']);
+    Illuminate\Support\Facades\Http::fake(['api.telegram.org/*' => Illuminate\Support\Facades\Http::response(['ok' => true])]);
+
+    $desa = App\Models\Zona::desa()->where('nama', 'Sariwani')->first();
+    $titik = $desa->poligon_geojson;
+    $ring = ($titik['type'] === 'MultiPolygon' ? $titik['coordinates'][0][0] : $titik['coordinates'][0]);
+    $lng = array_sum(array_column($ring, 0)) / count($ring);
+    $lat = array_sum(array_column($ring, 1)) / count($ring);
+    $dalam = App\Models\Zona::cariDesaDi($lat, $lng);
+
+    $this->postJson('/lapor', ['latitude' => $lat, 'longitude' => $lng, 'jenis_temuan' => 'asap_tipis'])
+        ->assertCreated();
+
+    $laporan = App\Models\LaporanAsap::latest('id')->first();
+    expect($laporan->zona_id)->toBe($dalam->id)
+        ->and($laporan->zona->data_analisis)->not->toBeNull();
+
+    Illuminate\Support\Facades\Http::assertSent(fn ($req) => str_contains($req->url(), '/sendMessage')
+        && $req['chat_id'] === '-100123'
+        && str_contains($req['text'], $laporan->nomor_tiket));
+});
