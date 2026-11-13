@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -47,6 +48,7 @@ class LayananLaporan
         // 5. Simpan laporan ke database
         $laporan = LaporanAsap::create([
             'nomor_tiket' => $nomorTiket,
+            'kode_pantau' => Str::lower(Str::random(12)),
             'zona_id' => $zonaId,
             'pelapor_id' => $pelaporId,
             'ip_pelapor' => $ip,
@@ -64,11 +66,16 @@ class LayananLaporan
 
         // 6. Kabari petugas lewat Telegram. Kegagalan Telegram tidak boleh
         //    menggagalkan laporan warga, jadi dibungkus try/catch.
+        $petugasDiberiTahu = false;
         try {
-            app(LayananBotTelegram::class)->kirimPeringatanLaporanBaru($laporan->load('zona'));
+            $hasil = app(LayananBotTelegram::class)->kirimPeringatanLaporanBaru($laporan->load('zona'));
+            $petugasDiberiTahu = ($hasil['success'] ?? false) && ! ($hasil['simulasi'] ?? false);
         } catch (\Throwable $e) {
             Log::warning('Peringatan Telegram laporan baru gagal: '.$e->getMessage());
         }
+
+        // Penanda sesaat (tidak disimpan) agar layar sukses jujur soal pengiriman.
+        $laporan->setAttribute('petugas_diberi_tahu', $petugasDiberiTahu);
 
         return $laporan;
     }

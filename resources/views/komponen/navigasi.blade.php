@@ -1,7 +1,7 @@
 @php
     $menuPublik = [
-        ['pantauan', 'Peta risiko desa', '01'],
-        ['evakuasi', 'Air & evakuasi', '02'],
+        ['pantauan', 'Dasboar peta risiko', '01'],
+        ['evakuasi', 'Logisitik & evakuasi', '02'],
         ['lapor.index', 'Lapor asap', '03'],
         ['notifikasi', 'Terima peringatan', '04'],
         ['metode', 'Metode & sumber data', '05'],

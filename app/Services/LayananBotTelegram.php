@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\LaporanAsap;
+use App\Models\SumberAir;
 use App\Models\Pengguna;
 use App\Models\Zona;
 use Illuminate\Support\Facades\Http;
@@ -109,6 +110,7 @@ class LayananBotTelegram
             ."Koordinat: {$laporan->latitude}, {$laporan->longitude}\n"
             .'Peta: '.$peta."\n"
             .($laporan->catatan ? "Catatan: {$e($laporan->catatan)}\n" : '')
+            .$this->barisLogistikTerdekat($laporan, $e)
             ."\nMohon verifikasi lapangan secepatnya.";
 
         $tombol = ['inline_keyboard' => [[
@@ -132,6 +134,29 @@ class LayananBotTelegram
     protected function urlPortal(): string
     {
         return rtrim((string) config('app.url'), '/');
+    }
+
+    /**
+     * Baris "air terdekat" dan "pos terdekat" untuk pesan petugas.
+     * Titik yang masih data contoh ditandai agar tidak dianggap resmi.
+     */
+    protected function barisLogistikTerdekat(LaporanAsap $laporan, callable $e): string
+    {
+        $baris = '';
+        $lat = (float) $laporan->latitude;
+        $lng = (float) $laporan->longitude;
+
+        foreach ([['Air terdekat', ['embung', 'sumber_air']], ['Pos terdekat', ['pos_jaga']]] as [$label, $jenis]) {
+            $hasil = SumberAir::terdekat($lat, $lng, $jenis);
+            if (! $hasil) {
+                continue;
+            }
+
+            $tanda = $hasil['titik']->adalah_contoh ? ' <i>(data contoh)</i>' : '';
+            $baris .= "{$label}: {$e($hasil['titik']->nama)} ± ".number_format($hasil['jarak_km'], 1, ',', '.')." km{$tanda}\n";
+        }
+
+        return $baris;
     }
 
     /**

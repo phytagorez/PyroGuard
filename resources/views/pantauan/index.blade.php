@@ -69,7 +69,7 @@
         <section class="map-workbench" aria-label="Peta kawasan Bromo">
             <div class="map-toolbar">
                 <div class="segmented" role="group" aria-label="Peta dasar"><button type="button" @click="gantiPeta('topografi')" :aria-pressed="petaDasar === 'topografi'">Topografi</button><button type="button" @click="gantiPeta('jalan')" :aria-pressed="petaDasar === 'jalan'">Jalan</button></div>
-                
+               
 <div class="map-actions">
     <button class="quiet-button" type="button" @click="fokusBromo()">
         Seluruh kawasan
@@ -103,58 +103,13 @@
                     <span><i class="risk-glyph" data-kelas="Tinggi"></i>Tinggi</span><span><i class="risk-glyph" data-kelas="Sedang"></i>Sedang</span><span><i class="risk-glyph" data-kelas="Rendah"></i>Rendah</span>
                 </div>
             </div>
-           <div class="map-layers" role="group" aria-label="Lapisan peta">
-
-    <label>
-        <input type="checkbox"
-               x-model="lapisan.desa"
-               @change="aturLapisan('desa')">
-        Desa menurut risiko
-    </label>
-
-    <label>
-        <input type="checkbox"
-               x-model="lapisan.titik"
-               @change="aturLapisan('titik')">
-        Titik pusat desa
-    </label>
-
-    <label>
-        <input type="checkbox"
-               x-model="lapisan.administrasi"
-               @change="aturLapisan('administrasi')">
-        Batas administrasi
-    </label>
-
-    <label>
-        <input type="checkbox"
-               x-model="lapisan.wilayah"
-               @change="aturLapisan('wilayah')"
-               :disabled="!wilayahTersedia">
-        Wilayah analisis GEE
-    </label>
-
-    <label>
-        <input type="checkbox"
-               x-model="lapisan.hotspot"
-               @change="aturLapisan('hotspot')">
-        Titik panas tersimpan
-    </label>
-
-    <label>
-        <input type="checkbox"
-               x-model="lapisan.sumberAir"
-               @change="aturLapisan('sumberAir')">
-        Sumber air
-    </label>
-
-</div>
-
-<p class="map-layer-note"
-   x-show="!wilayahTersedia"
-   x-cloak>
-    Batas wilayah analisis GEE belum tersedia dari dataset.
-</p>
+            <div class="map-layers" role="group" aria-label="Lapisan peta">
+                <label><input type="checkbox" x-model="lapisan.desa" @change="aturLapisan('desa')"> Desa menurut risiko</label>
+                <label><input type="checkbox" x-model="lapisan.titik" @change="aturLapisan('titik')"> Titik pusat desa</label>
+                <label><input type="checkbox" x-model="lapisan.administrasi" @change="aturLapisan('administrasi')"> Batas administrasi</label>
+                <label><input type="checkbox" x-model="lapisan.wilayah" @change="aturLapisan('wilayah')" :disabled="!wilayahTersedia"> Wilayah analisis GEE</label>
+                <label><input type="checkbox" x-model="lapisan.operasional" @change="aturLapisan('operasional')"> Logistik & titik panas tersimpan</label>
+            </div>
             <div class="map-footnote"><span>Warna desa = kelas risiko relatif · lingkaran, segitiga, dan belah ketupat menandai kelas tanpa bergantung pada warna</span><span>WGS 84 / EPSG:4326</span></div>
         </section>
 

@@ -30,6 +30,7 @@ class LaporanAsapController extends Controller
         }
 
         return view('lapor.index', [
+            'statusUrl' => session('status_url'),
             'zonas' => $zonas,
             'batasLaju' => $batasLaju,
             'zonaPilihan' => $zonaPilihan,
@@ -67,17 +68,19 @@ class LaporanAsapController extends Controller
                 $request->ip()
             );
 
-            $laporan->load('zona:id,kode,nama');
+            $laporan->load('zona:id,kode,nama,data_analisis');
 
             if ($request->wantsJson()) {
                 return response()->json([
                     'success' => true,
-                    'pesan' => "Tiket {$laporan->nomor_tiket} dibuat. Petugas terdekat diberi tahu.",
+                    'pesan' => "Tiket {$laporan->nomor_tiket} dibuat.".($laporan->petugas_diberi_tahu ? ' Petugas sudah diberi tahu.' : ' Laporan masuk antrean petugas.'),
                     'data' => $laporan,
                 ], 201);
             }
 
-            return redirect()->route('lapor.index')->with('tiket_berhasil', $laporan);
+            return redirect()->route('lapor.index')
+                ->with('tiket_berhasil', $laporan)
+                ->with('status_url', route('lapor.status', $laporan->kode_pantau));
         } catch (ValidationException $e) {
             if ($request->wantsJson()) {
                 return response()->json([
@@ -89,5 +92,18 @@ class LaporanAsapController extends Controller
 
             return back()->withErrors($e->errors())->withInput();
         }
+    }
+
+    /**
+     * Halaman status publik laporan. Hanya menampilkan status dan desa,
+     * tanpa koordinat, foto, atau data pelapor.
+     */
+    public function status(string $kode)
+    {
+        $laporan = \App\Models\LaporanAsap::with('zona:id,nama,data_analisis')
+            ->where('kode_pantau', $kode)
+            ->firstOrFail();
+
+        return view('lapor.status', ['laporan' => $laporan]);
     }
 }

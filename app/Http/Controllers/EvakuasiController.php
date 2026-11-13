@@ -31,8 +31,9 @@ class EvakuasiController extends Controller
 
         // 4. Cari angin dominan dari zona dengan risiko tertinggi
         $zonaBahaya = $zonas->sortByDesc(fn ($z) => $z->risikoTerbaru?->indeks_bahaya_api ?? 0)->first();
-        $arahAngin = $zonaBahaya?->risikoTerbaru?->arah_angin ?? 'Tenggara';
-        $kecepatanAngin = round($zonaBahaya?->risikoTerbaru?->kecepatan_angin_kmj ?? 20);
+        $arahAngin = $zonaBahaya?->risikoTerbaru?->arah_angin;
+        $kecepatanAngin = $zonaBahaya?->risikoTerbaru?->kecepatan_angin_kmj;
+        $kecepatanAngin = $kecepatanAngin === null ? null : round($kecepatanAngin);
 
         return view('evakuasi.index', [
             'sumberAirs' => $sumberAirs,
@@ -42,6 +43,8 @@ class EvakuasiController extends Controller
             'kecepatanAngin' => $kecepatanAngin,
             'zonaBahaya' => $zonaBahaya,
             'tabPilihan' => $request->query('tab', 'semua'),
+            'adaDataContoh' => $sumberAirs->contains(fn ($s) => $s->adalah_contoh),
+            'semuaContoh' => $sumberAirs->isNotEmpty() && $sumberAirs->every(fn ($s) => $s->adalah_contoh),
         ]);
     }
 }

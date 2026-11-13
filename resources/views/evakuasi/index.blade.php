@@ -30,14 +30,53 @@
         <div class="p-3 bg-paper-2 border border-line rounded-md flex items-center gap-3 shrink-0">
 
             <div class="text-xs font-sans">
-                <span class="text-ink-muted block text-xs font-bold">Angin Dominan Kawasan · tersimpan</span>
-                <span class="font-display font-bold text-ink text-sm">
-                    {{ $kecepatanAngin }} km/j · Dari {{ $arahAngin }}
-                </span>
-                <span class="text-xs text-danger block font-semibold">Bukan observasi cuaca terbaru.</span>
+                <span class="text-ink-muted block text-xs font-bold">Angin Dominan Kawasan</span>
+                @if ($arahAngin && $kecepatanAngin !== null)
+                    <span class="font-display font-bold text-ink text-sm">{{ $kecepatanAngin }} km/j · Dari {{ $arahAngin }}</span>
+                    <span class="text-xs text-danger block font-semibold">Data tersimpan, bukan observasi terbaru.</span>
+                @else
+                    <span class="font-display font-bold text-ink text-sm">Data angin belum tersedia</span>
+                @endif
             </div>
         </div>
     </div>
+
+    @if ($adaDataContoh)
+        <div class="p-3 rounded-md border border-line bg-paper-2 text-xs font-sans text-ink-muted" role="note">
+            <strong class="text-ink">{{ $semuaContoh ? 'Seluruh titik di halaman ini masih data contoh.' : 'Sebagian titik di halaman ini masih data contoh.' }}</strong>
+            Lokasi bertanda "Data contoh" belum diverifikasi instansi. Jangan dipakai sebagai rujukan evakuasi sebenarnya.
+        </div>
+    @endif
+
+    {{-- TITIK TERDEKAT DARI LOKASI PENGGUNA --}}
+    <section class="p-4 bg-paper-2 border border-line rounded-lg" aria-labelledby="judul-terdekat">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+                <h2 id="judul-terdekat" class="font-display font-bold text-base text-ink">Terdekat dari lokasimu</h2>
+                <p class="text-xs text-ink-muted mt-0.5">Cari sumber air, pos jaga, dan titik kumpul paling dekat. Lokasimu hanya diproses di perangkat ini.</p>
+            </div>
+            <button type="button" @click="cariTerdekat()" :disabled="memuatTerdekat" class="min-h-[44px] px-4 py-2 rounded-md bg-forest hover:bg-moss text-white font-display font-bold text-sm shrink-0 disabled:opacity-60">
+                <span x-text="memuatTerdekat ? 'Mencari lokasi…' : (terdekat.length ? 'Perbarui lokasi' : 'Cari yang terdekat')"></span>
+            </button>
+        </div>
+        <p class="text-xs text-danger font-semibold mt-3" x-show="kesalahanTerdekat" x-cloak role="alert" x-text="kesalahanTerdekat"></p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-3" x-show="terdekat.length" x-cloak role="status" aria-live="polite">
+            <template x-for="t in terdekat" :key="t.label">
+                <div class="p-3 bg-paper border border-line rounded-md text-xs font-sans space-y-1">
+                    <span class="text-ink-muted font-bold block" x-text="t.label"></span>
+                    <template x-if="t.titik">
+                        <div class="space-y-1">
+                            <strong class="font-display text-sm text-ink block" x-text="t.titik.nama"></strong>
+                            <span class="text-ink block" x-text="'± ' + t.jarak.toLocaleString('id-ID', {maximumFractionDigits: 1}) + ' km garis lurus'"></span>
+                            <span class="text-danger font-semibold block" x-show="t.titik.adalah_contoh">Data contoh, belum diverifikasi</span>
+                            <a :href="'https://www.google.com/maps/dir/?api=1&destination=' + t.titik.latitude + ',' + t.titik.longitude" target="_blank" rel="noopener" class="inline-block mt-1 text-forest font-semibold underline">Buka rute di Google Maps</a>
+                        </div>
+                    </template>
+                    <span class="text-ink-muted" x-show="!t.titik">Belum ada data.</span>
+                </div>
+            </template>
+        </div>
+    </section>
 
     {{-- PETA PENUH DENGAN LAPISAN WATER & EVAC (§7.5) --}}
     <div class="bg-paper-2 border border-line rounded-lg overflow-hidden shadow-none">
@@ -138,7 +177,7 @@
                             <span class="font-sans text-xs font-bold tracking-normal px-2 py-0.5 rounded-full {{ $sa->jenis === 'titik_kumpul' ? 'bg-safe text-white' : ($sa->jenis === 'pos_jaga' ? 'bg-forest text-white' : 'bg-water text-white') }}">
                                 {{ str_replace('_', ' ', $sa->jenis) }}
                             </span>
-                            <span class="text-xs font-sans text-ink-muted">{{ $sa->zona?->kode ?? 'Kawasan' }}</span>
+                            <span class="text-xs font-sans text-ink-muted">{{ $sa->zona?->data_analisis['Label'] ?? $sa->zona?->nama ?? 'Kawasan' }}</span>
                         </div>
 
                         <h3 class="font-display font-bold text-sm text-ink group-hover:text-forest transition">
@@ -153,6 +192,13 @@
                             <div class="flex items-center justify-between">
                                 <span>Status Logistik:</span>
                                 <span class="font-semibold text-safe">{{ $sa->status_siaga }}</span>
+                            </div>
+                            <div class="pt-1">
+                                @if ($sa->adalah_contoh)
+                                    <span class="inline-block px-2 py-0.5 rounded-full border border-danger text-danger font-semibold">Data contoh</span>
+                                @else
+                                    <span class="inline-block px-2 py-0.5 rounded-full border border-line text-ink font-semibold">Sumber: {{ $sa->sumber_data }}@if ($sa->tanggal_verifikasi) · diverifikasi {{ $sa->tanggal_verifikasi->translatedFormat('j M Y') }}@endif</span>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -201,6 +247,9 @@ function evakuasiPeta(sumberAirsData, jalurData, tabPilihan) {
         jalurData: jalurData || [],
         mapInstance: null,
         userLocation: null,
+        terdekat: [],
+        memuatTerdekat: false,
+        kesalahanTerdekat: '',
         markers: [],
         lines: [],
 
@@ -317,6 +366,42 @@ function evakuasiPeta(sumberAirsData, jalurData, tabPilihan) {
                     targetMarker.openPopup();
                 }
             }
+        },
+
+        jarakKm(lat1, lng1, lat2, lng2) {
+            const rad = (d) => d * Math.PI / 180;
+            const a = Math.sin(rad(lat2 - lat1) / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(rad(lng2 - lng1) / 2) ** 2;
+            return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        },
+
+        cariTerdekat() {
+            this.kesalahanTerdekat = '';
+            if (!navigator.geolocation) { this.kesalahanTerdekat = 'Perangkat ini tidak mendukung GPS.'; return; }
+            this.memuatTerdekat = true;
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    const { latitude: lat, longitude: lng } = pos.coords;
+                    const kelompok = [
+                        ['Sumber air terdekat', ['embung', 'sumber_air']],
+                        ['Pos jaga terdekat', ['pos_jaga']],
+                        ['Titik kumpul terdekat', ['titik_kumpul']],
+                    ];
+                    this.terdekat = kelompok.map(([label, jenis]) => {
+                        let terbaik = null; let min = Infinity;
+                        this.sumberAirs.filter(s => jenis.includes(s.jenis)).forEach(s => {
+                            const d = this.jarakKm(lat, lng, Number(s.latitude), Number(s.longitude));
+                            if (d < min) { min = d; terbaik = s; }
+                        });
+                        return { label, titik: terbaik, jarak: min };
+                    });
+                    this.memuatTerdekat = false;
+                },
+                (err) => {
+                    this.memuatTerdekat = false;
+                    this.kesalahanTerdekat = { 1: 'Izin lokasi ditolak. Aktifkan izin lokasi di pengaturan browser.', 2: 'Lokasi tidak tersedia. Coba pindah ke area terbuka.', 3: 'Pencarian lokasi terlalu lama. Coba lagi.' }[err.code] || 'Gagal mendapatkan lokasi.';
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
         },
 
         bagikanLokasiSaya() {

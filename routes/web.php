@@ -41,6 +41,7 @@ Route::post('/demo/buat-laporan-contoh', [ModeDemoController::class, 'buatLapora
 // Layar Lapor Asap Warga (§6.8 & §7.3)
 Route::get('/lapor', [LaporanAsapController::class, 'create'])->name('lapor.index');
 Route::post('/lapor', [LaporanAsapController::class, 'store'])->name('lapor.store');
+Route::get('/lapor/status/{kode}', [LaporanAsapController::class, 'status'])->middleware('throttle:30,1')->name('lapor.status');
 
 // Autentikasi & Masuk (§7.9)
 Route::get('/masuk', [AutentikasiController::class, 'tampilMasuk'])->name('masuk');

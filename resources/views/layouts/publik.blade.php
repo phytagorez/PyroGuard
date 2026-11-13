@@ -56,8 +56,8 @@
         </main>
     </div>
     <nav class="mobile-bottom" aria-label="Navigasi cepat">
-        <a href="{{ route('pantauan') }}" @if(request()->routeIs('pantauan')) aria-current="page" @endif>Peta risiko</a>
-        <a href="{{ route('evakuasi') }}" @if(request()->routeIs('evakuasi')) aria-current="page" @endif>Air & evakuasi</a>
+        <a href="{{ route('pantauan') }}" @if(request()->routeIs('pantauan')) aria-current="page" @endif>Dashboard peta risiko</a>
+        <a href="{{ route('evakuasi') }}" @if(request()->routeIs('evakuasi')) aria-current="page" @endif>Logistik & evakuasi</a>
         <a href="{{ route('lapor.index') }}" @if(request()->routeIs('lapor.*')) aria-current="page" @endif>Lapor asap</a>
         <button type="button" @click="menuBuka = !menuBuka" :aria-expanded="menuBuka" aria-controls="navigasi-aplikasi">Menu</button>
     </nav>

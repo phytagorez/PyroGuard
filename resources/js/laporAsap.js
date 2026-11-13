@@ -27,7 +27,10 @@ export default function laporAsap(config) {
         lokasiNama: config.lokasiNama,
         zonaId: config.zonaId,
         zonaKode: config.zonaKode,
-        jenisTemuan: 'asap_tipis',
+        jenisTemuan: '',
+        jenisError: false,
+        kelasRisiko: null,
+        statusUrl: config.statusUrl || '',
         catatan: '',
 
         // Peta & GPS
@@ -165,6 +168,7 @@ export default function laporAsap(config) {
             this.zonaId = terpilih.id;
             this.zonaKode = terpilih.kode;
             this.lokasiNama = terpilih.data_analisis?.Label || terpilih.nama;
+            this.kelasRisiko = terpilih.data_analisis?.Kelas || null;
         },
 
         handleFoto(event) {
@@ -234,6 +238,26 @@ export default function laporAsap(config) {
             return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
         },
 
+        labelJenis(j) {
+            return { asap_tipis: 'Asap tipis', asap_tebal: 'Asap tebal', api_terlihat: 'Api terlihat', bekas_terbakar: 'Bekas terbakar' }[j] || (j || '').replace(/_/g, ' ');
+        },
+
+        periksaJenis(event) {
+            if (!this.jenisTemuan) {
+                event.preventDefault();
+                this.jenisError = true;
+                this.$nextTick(() => document.getElementById('blok-jenis')?.scrollIntoView({ behavior: 'smooth', block: 'center' }));
+            }
+        },
+
+        salinTautan() {
+            if (!this.statusUrl) { return; }
+            navigator.clipboard.writeText(this.statusUrl).then(
+                () => alert('Tautan status laporan berhasil disalin.'),
+                () => window.prompt('Salin tautan status laporan:', this.statusUrl)
+            );
+        },
+
         salinNomorTiket(nomor) {
             navigator.clipboard.writeText(nomor);
             alert('Nomor tiket ' + nomor + ' berhasil disalin ke clipboard.');
@@ -244,6 +268,9 @@ export default function laporAsap(config) {
         resetForm() {
             this.sukses = false;
             this.tiket = null;
+            this.jenisTemuan = '';
+            this.jenisError = false;
+            this.statusUrl = '';
             this.fotoPreviews = [];
             this.catatan = '';
             this.$nextTick(() => {

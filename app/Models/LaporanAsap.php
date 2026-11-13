@@ -28,6 +28,7 @@ class LaporanAsap extends Model
      */
     protected $fillable = [
         'nomor_tiket',
+        'kode_pantau',
         'zona_id',
         'pelapor_id',
         'ip_pelapor',
@@ -52,6 +53,13 @@ class LaporanAsap extends Model
      *
      * @return array<string, string>
      */
+    /**
+     * Kode pantau tidak ikut dalam JSON/API agar tautan status tidak bocor.
+     *
+     * @var array<int, string>
+     */
+    protected $hidden = ['kode_pantau'];
+
     protected function casts(): array
     {
         return [
